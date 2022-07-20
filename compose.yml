@@ -1,0 +1,10 @@
+version: '3.3'
+services:
+  snakewatch:
+    image: galacticcouncil/snakewatch:latest
+    environment:
+      DISCORD_CHANNEL: '999243620609687572'
+      DISCORD_TOKEN: xxx
+      RPC_URL: wss://rpc-01.basilisk-rococo.hydradx.io
+    logging:
+      driver: json-file

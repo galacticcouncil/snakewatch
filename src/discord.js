@@ -1,0 +1,36 @@
+import {Client, GatewayIntentBits} from 'discord.js';
+
+let _client = null;
+let _channel = null;
+
+export function initDiscord(token, channel) {
+  const client = new Client({intents: [GatewayIntentBits.Guilds]});
+  return new Promise(resolve => {
+    client.once('ready', () => {
+      console.log('discord ready');
+      _client = client;
+      _channel = channel;
+      resolve()
+    });
+    client.login(token);
+  });
+}
+
+export function client() {
+  if (!_client) {
+    throw new Error('discord not initialized');
+  }
+  return _client;
+}
+
+export function broadcast(message) {
+  console.log(message);
+  if (_client) {
+    const channel = client().channels.cache.get(_channel);
+    if (channel) {
+      channel.send(message);
+    } else {
+      throw new Error(`discord channel ${_channel} not connected`);
+    }
+  }
+}

@@ -23,7 +23,10 @@ export class Events {
   }
 
   startWatching() {
-    this.killWatcher = api().query.system.events(events => this.emit(processEvents(events)));
+    this.killWatcher = api().query.system.number(head => {
+      console.log(`block ${head.toNumber()}`);
+      this.emitFromBlock(head-1);
+    });
   }
 
   stopWatching() {

@@ -22,6 +22,8 @@ async function main() {
   const events = new Events();
   events.addHandler(xyk);
 
+  events.emitFromBlock(454640);
+
   events.startWatching();
 }
 

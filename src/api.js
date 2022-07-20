@@ -5,6 +5,7 @@ let _api;
 let provider;
 
 export async function initApi(rpc) {
+  console.warn = () => {};
   provider = new WsProvider(rpc);
   _api = await ApiPromise.create({provider});
   initialized = true;

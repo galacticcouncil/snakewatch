@@ -1,7 +1,9 @@
 import {Client, GatewayIntentBits} from 'discord.js';
+import markdownToAnsi from 'markdown-to-ansi'
 
 let _client = null;
 let _channel = null;
+const toAnsi = markdownToAnsi();
 
 export function initDiscord(token, channel) {
   const client = new Client({intents: [GatewayIntentBits.Guilds]});
@@ -24,7 +26,7 @@ export function client() {
 }
 
 export function broadcast(message) {
-  console.log(message);
+  console.log(toAnsi(message));
   if (_client) {
     const channel = client().channels.cache.get(_channel);
     if (channel) {

@@ -14,12 +14,15 @@ async function tradesHandler({event, siblings}) {
     method === 'Transferred' && from.toString() === who.toString());
   const bought = siblings.find(({method, data: {to}}) =>
     method === 'Transferred' && to.toString() === who.toString());
-  await loadCurrencies([sold, bought].map(({data: {currencyId}}) => currencyId));
+  const currencyIds = [sold, bought].map(({data: {currencyId}}) => currencyId.toString());
+  await loadCurrencies(currencyIds);
   recordPrice(sold, bought);
   const value = usdValue(sold.data);
   const whale = value >= 10**12;
   let message = `${formatAccount(who, whale)} swapped **${formatAmount(sold.data)}** for **${formatAmount(bought.data)}**`;
-  message += formatUsdValue(value);
+  if (!currencyIds.includes(usdCurrencyId)) {
+    message += formatUsdValue(value);
+  }
   broadcast(message);
 }
 
@@ -43,5 +46,5 @@ async function liquidityRemovedHandler({event, siblings}) {
 }
 
 function formatUsdValue(value) {
-  return value ? ` (~${formatAmount({amount: value, currencyId: usdCurrencyId})})` : '';
+  return value ? ` *~ ${formatAmount({amount: value, currencyId: usdCurrencyId})}*` : '';
 }

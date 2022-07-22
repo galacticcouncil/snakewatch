@@ -3,7 +3,6 @@ import {
   formatAccount,
   formatAmount, formatUsdValue,
   isWhale,
-  loadCurrencies,
   recordPrice,
   usdValue
 } from "../currencies.js";
@@ -23,7 +22,6 @@ async function tradesHandler({event, siblings}) {
   const bought = siblings.find(({method, data: {to}}) =>
     method === 'Transferred' && to.toString() === who.toString());
   const currencyIds = [sold, bought].map(({data: {currencyId}}) => currencyId.toString());
-  await loadCurrencies(currencyIds);
   recordPrice(sold, bought);
   const value = usdValue(sold.data);
   let message = `${formatAccount(who, isWhale(value))} swapped **${formatAmount(sold.data)}** for **${formatAmount(bought.data)}**`;
@@ -37,7 +35,6 @@ async function liquidityAddedHandler({event}) {
   const {who, assetA, assetB, amountA, amountB} = event.data;
   const a = {amount: amountA, currencyId: assetA};
   const b = {amount: amountB, currencyId: assetB}
-  await loadCurrencies([assetA, assetB]);
   const [va, vb] = [a, b].map(usdValue);
   const value = va && vb ? va + vb : null;
   const message = `💦 liquidity added as **${formatAmount(a)}** + **${formatAmount(b)}**${formatUsdValue(value)} by ${formatAccount(who, isWhale(value))}`;
@@ -45,8 +42,7 @@ async function liquidityAddedHandler({event}) {
 }
 
 async function liquidityRemovedHandler({event, siblings}) {
-  const {who, assetA, assetB} = event.data;
-  await loadCurrencies([assetA, assetB]);
+  const {who} = event.data;
   const amounts = siblings.filter(({method, data: {to}}) =>
     method === 'Transferred' && to.toString() === who.toString()).map(({data}) => data);
   const message = `🚰 liquidity removed as **${formatAmount(amounts[0])}** + **${formatAmount(amounts[1])}** by ${formatAccount(who)}`;

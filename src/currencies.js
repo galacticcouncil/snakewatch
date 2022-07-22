@@ -8,18 +8,20 @@ const prices = {};
 
 export const isWhale = amount => amount >= whaleAmount;
 
-export async function loadCurrencies(currencyIds) {
-  await Promise.all(currencyIds.map(async id => {
-    if (!currencies[id]) {
-      const currency = await api().query.assetRegistry.assets(id);
-      currencies = {...currencies, [id]: currency};
-    }
-  }));
+export function currenciesHandler(events) {
+  events.onSection('currencies', ({event: {data: {currencyId}}}) => currencyId && loadCurrency([currencyId]))
+}
+
+async function loadCurrency(id) {
+  if (!currencies[id]) {
+    const currency = await api().query.assetRegistry.assets(id);
+    currencies = {...currencies, [id]: currency};
+  }
 }
 
 export const recordPrice = (sold, bought) => {
   const pair = [sold, bought].map(({data}) => data);
-  const [a,b] = pair.map(({currencyId}) => currencyId.toNumber());
+  const [a, b] = pair.map(({currencyId}) => currencyId.toNumber());
   if (!prices[a]) {
     prices[a] = {};
   }

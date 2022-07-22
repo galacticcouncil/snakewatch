@@ -28,10 +28,10 @@ describe("Events", () => {
 
   it('onData should find account', async () => {
     const account = 'bXhWRGcGhADH5ZWBJwo5c3G6kLEGVv3gyWfrDxuYqQGS75X94';
-    events.onData(
+    events.onFilter(
       'balances',
       'Withdraw',
-      ({who}) => who.toString() === account,
+      ({event}) => event.data.who.toString() === account,
       ({event: {data: {who}}}) => expect(who.toString()).toBe(account)
     );
     expect(await events.emit(preloadedEvents)).toBe(1);

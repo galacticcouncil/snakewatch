@@ -4,6 +4,7 @@ import xyk from "./handlers/xyk.js";
 import transfers from "./handlers/transfers.js";
 import {initDiscord} from "./discord.js";
 import {rpc, sha, token, channel} from "./config.js";
+import {currenciesHandler} from "./currencies.js";
 
 async function main() {
   console.log('🐍⌚');
@@ -15,6 +16,7 @@ async function main() {
   await initDiscord(token, channel);
 
   const events = new Events();
+  events.addHandler(currenciesHandler);
   events.addHandler(xyk);
   events.addHandler(transfers);
 

@@ -8,8 +8,8 @@ export class Events {
     return this;
   }
 
-  onData(section, method, dataPredicate, addedCallback) {
-    this.listeners.push({method, section, dataPredicate, addedCallback});
+  onFilter(section, method, filterPredicate, addedCallback) {
+    this.listeners.push({method, section, filterPredicate, addedCallback});
     return this;
   }
 
@@ -37,14 +37,17 @@ export class Events {
 
   async emit(events) {
     const listeners = this.listeners;
-    return (await Promise.all(
-      events.flatMap(e => listeners
-        .filter(({method, section, dataPredicate}) =>
+    const callbacks = events.flatMap(e => listeners
+        .filter(({method, section, filterPredicate}) =>
           (method ? e.event.method === method : true)
-          && (dataPredicate ? dataPredicate(e.event.data) : true)
+          && (filterPredicate ? filterPredicate(e) : true)
           && (section ? e.event.section === section : true))
-        .map(({addedCallback}) => this.useHandledCallback(addedCallback)(e)))
-    )).length;
+        .map(({addedCallback}) => [this.useHandledCallback(addedCallback), e])
+    );
+    for (const [callback, event] of callbacks) {
+      await callback(event);
+    }
+    return callbacks.length;
   }
 
   async emitFromBlock(blocknumber) {

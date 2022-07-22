@@ -1,6 +1,7 @@
 import {initApi, api} from './api.js';
 import {Events} from "./events.js";
 import xyk from "./handlers/xyk.js";
+import transfers from "./handlers/transfers.js";
 import {initDiscord} from "./discord.js";
 import {rpc, sha, token, channel} from "./config.js";
 
@@ -15,6 +16,7 @@ async function main() {
 
   const events = new Events();
   events.addHandler(xyk);
+  events.addHandler(transfers);
 
   events.emitFromBlock(454640);
 

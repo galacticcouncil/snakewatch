@@ -1,7 +1,7 @@
 import {broadcast} from "../discord.js";
 import {
   formatAccount,
-  formatAmount,
+  formatAmount, formatUsdValue,
   isWhale,
   loadCurrencies,
   recordPrice,
@@ -51,8 +51,4 @@ async function liquidityRemovedHandler({event, siblings}) {
     method === 'Transferred' && to.toString() === who.toString()).map(({data}) => data);
   const message = `🚰 liquidity removed as **${formatAmount(amounts[0])}** + **${formatAmount(amounts[1])}** by ${formatAccount(who)}`;
   broadcast(message);
-}
-
-function formatUsdValue(value) {
-  return value ? ` *~ ${formatAmount({amount: value, currencyId: usdCurrencyId})}*` : '';
 }

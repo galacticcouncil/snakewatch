@@ -18,7 +18,7 @@ async function tradesHandler({event, siblings}) {
   await loadCurrencies(currencyIds);
   recordPrice(sold, bought);
   const value = usdValue(sold.data);
-  const whale = value >= 10**12;
+  const whale = value >= 10 ** 12;
   let message = `${formatAccount(who, whale)} swapped **${formatAmount(sold.data)}** for **${formatAmount(bought.data)}**`;
   if (!currencyIds.includes(usdCurrencyId)) {
     message += formatUsdValue(value);
@@ -28,11 +28,12 @@ async function tradesHandler({event, siblings}) {
 
 async function liquidityAddedHandler({event}) {
   const {who, assetA, assetB, amountA, amountB} = event.data;
+  const a = {amount: amountA, currencyId: assetA};
+  const b = {amount: amountB, currencyId: assetB}
   await loadCurrencies([assetA, assetB]);
-  const message = `💦 liquidity added as **${formatAmount({
-    amount: amountA,
-    currencyId: assetA
-  })}** + **${formatAmount({amount: amountB, currencyId: assetB})}** by ${formatAccount(who)}`;
+  const [va, vb] = [a, b].map(usdValue);
+  const value = va && vb ? va + vb : null;
+  const message = `💦 liquidity added as **${formatAmount(a)}** + **${formatAmount(b)}**${formatUsdValue(value)} by ${formatAccount(who)}`;
   broadcast(message);
 }
 

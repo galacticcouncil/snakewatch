@@ -1,5 +1,13 @@
 import {broadcast} from "../discord.js";
-import {formatAccount, formatAmount, loadCurrencies, recordPrice, usdCurrencyId, usdValue} from "../currencies.js";
+import {
+  formatAccount,
+  formatAmount,
+  isWhale,
+  loadCurrencies,
+  recordPrice,
+  usdValue
+} from "../currencies.js";
+import {usdCurrencyId} from "../config.js";
 
 export default function xykHandler(events) {
   events.on('xyk', 'SellExecuted', tradesHandler)
@@ -18,8 +26,7 @@ async function tradesHandler({event, siblings}) {
   await loadCurrencies(currencyIds);
   recordPrice(sold, bought);
   const value = usdValue(sold.data);
-  const whale = value >= 10 ** 12;
-  let message = `${formatAccount(who, whale)} swapped **${formatAmount(sold.data)}** for **${formatAmount(bought.data)}**`;
+  let message = `${formatAccount(who, isWhale(value))} swapped **${formatAmount(sold.data)}** for **${formatAmount(bought.data)}**`;
   if (!currencyIds.includes(usdCurrencyId)) {
     message += formatUsdValue(value);
   }
@@ -33,7 +40,7 @@ async function liquidityAddedHandler({event}) {
   await loadCurrencies([assetA, assetB]);
   const [va, vb] = [a, b].map(usdValue);
   const value = va && vb ? va + vb : null;
-  const message = `💦 liquidity added as **${formatAmount(a)}** + **${formatAmount(b)}**${formatUsdValue(value)} by ${formatAccount(who)}`;
+  const message = `💦 liquidity added as **${formatAmount(a)}** + **${formatAmount(b)}**${formatUsdValue(value)} by ${formatAccount(who, isWhale(value))}`;
   broadcast(message);
 }
 

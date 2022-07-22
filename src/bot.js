@@ -1,18 +1,12 @@
-import * as dotenv from 'dotenv';
 import {initApi, api} from './api.js';
 import {Events} from "./events.js";
 import xyk from "./handlers/xyk.js";
 import {initDiscord} from "./discord.js";
-
-dotenv.config();
-
-const rpc = process.env.RPC_URL || 'wss://localhost:9988';
-const token = process.env.DISCORD_TOKEN;
-const channel = process.env.DISCORD_CHANNEL;
+import {rpc, sha, token, channel} from "./config.js";
 
 async function main() {
   console.log('🐍⌚');
-  console.log('snakewatch', process.env.COMMIT_SHA || 'dev');
+  console.log('snakewatch', sha);
   await initApi(rpc);
   const {rpc: {system}} = api();
   const [chain, version] = await Promise.all([system.chain(), system.version()]);

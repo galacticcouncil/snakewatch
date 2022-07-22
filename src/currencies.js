@@ -1,10 +1,12 @@
 import {api} from "./api.js";
 import dijkstrajs from "dijkstrajs";
+import {usdCurrencyId, whaleAmount} from "./config.js";
 
 let currencies = {};
 
 const prices = {};
-export const usdCurrencyId = process.env.USD_TOKEN || '4';
+
+export const isWhale = amount => amount >= whaleAmount;
 
 export async function loadCurrencies(currencyIds) {
   await Promise.all(currencyIds.map(async id => {

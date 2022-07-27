@@ -16,7 +16,8 @@ export default function xykHandler(events) {
 }
 
 async function tradesHandler({event, siblings}) {
-  const {who, assetIn, assetOut, amount: amountIn, salePrice: amountOut} = event.data;
+  const {who, assetIn, assetOut, amount: amountIn, salePrice, buyPrice} = event.data;
+  const amountOut = salePrice || buyPrice;
   const sold = {currencyId: assetIn, amount: amountIn};
   const bought = {currencyId: assetOut, amount: amountOut};
   recordPrice(sold, bought);

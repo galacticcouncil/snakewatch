@@ -16,16 +16,13 @@ export default function xykHandler(events) {
 }
 
 async function tradesHandler({event, siblings}) {
-  const {who} = event.data;
-  const sold = siblings.find(({method, data: {from}}) =>
-    method === 'Transferred' && from.toString() === who.toString());
-  const bought = siblings.find(({method, data: {to}}) =>
-    method === 'Transferred' && to.toString() === who.toString());
-  const currencyIds = [sold, bought].map(({data: {currencyId}}) => currencyId.toString());
+  const {who, assetIn, assetOut, amount: amountIn, salePrice: amountOut} = event.data;
+  const sold = {currencyId: assetIn, amount: amountIn};
+  const bought = {currencyId: assetOut, amount: amountOut};
   recordPrice(sold, bought);
-  const value = usdValue(sold.data);
-  let message = `${formatAccount(who, isWhale(value))} swapped **${formatAmount(sold.data)}** for **${formatAmount(bought.data)}**`;
-  if (!currencyIds.includes(usdCurrencyId)) {
+  const value = usdValue(bought);
+  let message = `${formatAccount(who, isWhale(value))} swapped **${formatAmount(sold)}** for **${formatAmount(bought)}**`;
+  if (![assetIn, assetOut].includes(usdCurrencyId)) {
     message += formatUsdValue(value);
   }
   broadcast(message);

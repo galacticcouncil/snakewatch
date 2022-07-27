@@ -6,7 +6,8 @@
   "scripts": {
     "test": "node --experimental-vm-modules ./node_modules/.bin/jest --detectOpenHandles",
     "start": "node src/bot.js",
-    "start:rococo": "RPC_URL=wss://rpc-01.basilisk-rococo.hydradx.io npm run start"
+    "start:rococo": "RPC_URL=wss://rpc-01.basilisk-rococo.hydradx.io npm run start",
+    "start:mainnet": "RPC_URL=wss://rpc.basilisk.cloud npm run start"
   },
   "repository": {
     "type": "git",

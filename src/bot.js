@@ -20,8 +20,6 @@ async function main() {
   events.addHandler(xyk);
   events.addHandler(transfers);
 
-  events.emitFromBlock(454640);
-
   events.startWatching();
 }
 

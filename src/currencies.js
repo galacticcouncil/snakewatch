@@ -14,8 +14,11 @@ export function currenciesHandler(events) {
 
 async function loadCurrency(id) {
   if (!currencies[id]) {
-    const currency = await api().query.assetRegistry.assets(id);
-    currencies = {...currencies, [id]: currency};
+    const [asset, metadata] = await Promise.all([
+      api().query.assetRegistry.assets(id),
+      api().query.assetRegistry.assetMetadataMap(id)
+    ]);
+    currencies = {...currencies, [id]: {...asset.toHuman(), ...metadata.toHuman()}};
   }
 }
 
@@ -49,5 +52,5 @@ export function getPrice(asset, target) {
 
 export const formatAccount = (address, whale) => (whale ? '🐋' : '🐍') + `\`${address.toString().substr(-3)}\``;
 export const formatAmount = ({amount, currencyId}) => new Intl.NumberFormat('en-US', {maximumSignificantDigits: 4})
-  .format(Number(amount) / 10 ** 12) + ' ' + currencies[currencyId].toHuman().name;
+  .format(Number(amount) / 10 ** 12) + ' ' + (currencies[currencyId].symbol || currencies[currencyId].name);
 export const formatUsdValue = value => value ? ` *~ ${formatAmount({amount: value, currencyId: usdCurrencyId})}*` : '';

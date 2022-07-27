@@ -43,6 +43,8 @@ async function liquidityRemovedHandler({event, siblings}) {
   const {who} = event.data;
   const amounts = siblings.filter(({method, data: {to}}) =>
     method === 'Transferred' && to.toString() === who.toString()).map(({data}) => data);
-  const message = `🚰 liquidity removed as **${formatAmount(amounts[0])}** + **${formatAmount(amounts[1])}** by ${formatAccount(who)}`;
+  const [va, vb] = amounts.map(usdValue);
+  const value = va && vb ? va + vb : null;
+  const message = `🚰 liquidity removed as **${formatAmount(amounts[0])}** + **${formatAmount(amounts[1])}**${formatUsdValue(value)} by ${formatAccount(who, isWhale(value))}`;
   broadcast(message);
 }

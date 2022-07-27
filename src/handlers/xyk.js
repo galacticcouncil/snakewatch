@@ -16,14 +16,16 @@ export default function xykHandler(events) {
 }
 
 async function tradesHandler({event, siblings}) {
-  const {who, assetIn, assetOut, amount: amountIn, salePrice, buyPrice} = event.data;
-  const amountOut = salePrice || buyPrice;
-  const sold = {currencyId: assetIn, amount: amountIn};
-  const bought = {currencyId: assetOut, amount: amountOut};
+  const {who} = event.data;
+  const sold = siblings.find(({method, data: {from}}) =>
+    method === 'Transferred' && from.toString() === who.toString());
+  const bought = siblings.find(({method, data: {to}}) =>
+    method === 'Transferred' && to.toString() === who.toString());
+  const currencyIds = [sold, bought].map(({data: {currencyId}}) => currencyId.toString());
   recordPrice(sold, bought);
-  const value = usdValue(bought);
-  let message = `${formatAccount(who, isWhale(value))} swapped **${formatAmount(sold)}** for **${formatAmount(bought)}**`;
-  if (![assetIn, assetOut].includes(usdCurrencyId)) {
+  const value = usdValue(sold.data);
+  let message = `${formatAccount(who, isWhale(value))} swapped **${formatAmount(sold.data)}** for **${formatAmount(bought.data)}**`;
+  if (!currencyIds.includes(usdCurrencyId)) {
     message += formatUsdValue(value);
   }
   broadcast(message);
@@ -43,8 +45,6 @@ async function liquidityRemovedHandler({event, siblings}) {
   const {who} = event.data;
   const amounts = siblings.filter(({method, data: {to}}) =>
     method === 'Transferred' && to.toString() === who.toString()).map(({data}) => data);
-  const [va, vb] = amounts.map(usdValue);
-  const value = va && vb ? va + vb : null;
-  const message = `🚰 liquidity removed as **${formatAmount(amounts[0])}** + **${formatAmount(amounts[1])}**${formatUsdValue(value)} by ${formatAccount(who, isWhale(value))}`;
+  const message = `🚰 liquidity removed as **${formatAmount(amounts[0])}** + **${formatAmount(amounts[1])}** by ${formatAccount(who)}`;
   broadcast(message);
 }

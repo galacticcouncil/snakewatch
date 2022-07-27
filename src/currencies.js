@@ -20,7 +20,7 @@ async function loadCurrency(id) {
 }
 
 export const recordPrice = (sold, bought) => {
-  const pair = [sold, bought];
+  const pair = [sold, bought].map(({data}) => data);
   const [a, b] = pair.map(({currencyId}) => currencyId.toNumber());
   if (!prices[a]) {
     prices[a] = {};

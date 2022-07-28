@@ -19,10 +19,10 @@ const  treasury = 'bXj4uMHTyQyvNCLHKBv6ztwkPSx8tgsrxuFtAFfWDYntXtohw';
 
 async function tradesHandler({event, siblings}) {
   const {who} = event.data;
-  const sold = siblings.find(({method, data: {from}}) =>
-    method === 'Transferred' && from.toString() === who.toString());
+  const sold = siblings.find(({method, data: {from, to}}) =>
+    method === 'Transferred' && from.toString() === who.toString() && to.toString() !== treasury);
   const bought = siblings.find(({method, data: {to}}) =>
-    method === 'Transferred' && to.toString() === who.toString() && to.toString() !== treasury);
+    method === 'Transferred' && to.toString() === who.toString());
   const currencyIds = [sold, bought].map(({data: {currencyId}}) => currencyId.toString());
   recordPrice(sold, bought);
   const value = usdValue(sold.data);

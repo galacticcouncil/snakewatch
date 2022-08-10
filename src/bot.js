@@ -5,6 +5,7 @@ import transfers from "./handlers/transfers.js";
 import {initDiscord} from "./discord.js";
 import {rpc, sha, token, channel} from "./config.js";
 import {currenciesHandler} from "./currencies.js";
+import blocks from "../tests/blocks.js";
 
 async function main() {
   console.log('🐍⌚');
@@ -20,7 +21,11 @@ async function main() {
   events.addHandler(xyk);
   events.addHandler(transfers);
 
-  events.emitFromBlock(454640);
+  if (process.env.NODE_ENV === 'test') {
+    for (const {height} of blocks) {
+      await events.emitFromBlock(height);
+    }
+  }
 
   events.startWatching();
 }

@@ -24,8 +24,9 @@ export class Events {
 
   startWatching() {
     this.killWatcher = api().query.system.number(head => {
-      console.log(`block ${head.toNumber()}`);
-      this.emitFromBlock(head-1);
+      const block = head.toNumber() - 1;
+      console.log(`block ${block}`);
+      this.emitFromBlock(block);
     });
   }
 

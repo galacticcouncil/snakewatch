@@ -22,11 +22,14 @@ async function main() {
   events.addHandler(transfers);
 
   if (process.env.NODE_ENV === 'test') {
-    for (const {height} of blocks) {
+    console.log('testing mode: pushing testing blocks blocks')
+    for (const {height} of blocks.reverse()) {
+      console.log(`block ${height}`);
       await events.emitFromBlock(height);
     }
   }
 
+  console.log('watching for new blocks');
   events.startWatching();
 }
 

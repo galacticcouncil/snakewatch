@@ -22,10 +22,17 @@ async function main() {
   events.addHandler(transfers);
 
   if (process.env.NODE_ENV === 'test') {
-    console.log('testing mode: pushing testing blocks blocks')
-    for (const {height} of blocks.reverse()) {
-      console.log(`block ${height}`);
+    console.log('testing mode: pushing testing blocks blocks');
+    const blockNumbers = new Set(blocks.map(b => b.height));
+    blockNumbers.add(1605996);
+    for (const height of [...blockNumbers].sort()) {
       await events.emitFromBlock(height);
+    }
+    const lookBack = 100;
+    console.log(`testing mode: pushing last ${lookBack} blocks`);
+    const lastBlock = await api().query.system.number();
+    for (let i = lastBlock - lookBack; i <= lastBlock; i++) {
+      await events.emitFromBlock(i);
     }
   }
 

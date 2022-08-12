@@ -21,7 +21,7 @@ async function transferredHandler({event}) {
   const {from, to} = event.data;
   const value = usdValue(event.data);
   if (isWhale(value)) {
-    const message = `${formatAccount(from, true)} transferred **${formatAmount(event.data)}**${formatUsdValue(value)} to ${formatAccount(to, true)} @here`;
+    const message = `${formatAccount(from, true)} transferred **${formatAmount(event.data)}**${formatUsdValue(value)} to ${formatAccount(to, true)}`;
     broadcast(message);
   }
 }

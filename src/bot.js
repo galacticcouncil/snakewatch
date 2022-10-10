@@ -1,6 +1,7 @@
 import {initApi, api} from './api.js';
 import {Events} from "./events.js";
 import xyk from "./handlers/xyk.js";
+import lbp from "./handlers/lbp.js";
 import transfers from "./handlers/transfers.js";
 import {initDiscord} from "./discord.js";
 import {rpc, sha, token, channel} from "./config.js";
@@ -19,6 +20,7 @@ async function main() {
   const events = new Events();
   events.addHandler(currenciesHandler);
   events.addHandler(xyk);
+  events.addHandler(lbp);
   events.addHandler(transfers);
 
   if (process.env.NODE_ENV === 'test') {

@@ -26,12 +26,12 @@ async function buyHandler({event}) {
   return swapHandler({who, assetIn, assetOut, amountIn, amountOut});
 }
 
-async function swapHandler({who, assetIn, assetOut, amountIn, amountOut}) {
+export async function swapHandler({who, assetIn, assetOut, amountIn, amountOut}, icon = `🐍`) {
   const sold = {currencyId: assetIn, amount: amountIn};
   const bought = {currencyId: assetOut, amount: amountOut};
   recordPrice(sold, bought);
   const value = usdValue(bought);
-  let message = `${formatAccount(who, isWhale(value))} swapped **${formatAmount(sold)}** for **${formatAmount(bought)}**`;
+  let message = `${formatAccount(who, isWhale(value), icon)} swapped **${formatAmount(sold)}** for **${formatAmount(bought)}**`;
   if (![assetIn, assetOut].map(id => id.toString()).includes(usdCurrencyId)) {
     message += formatUsdValue(value);
   }

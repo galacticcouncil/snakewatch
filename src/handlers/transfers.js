@@ -5,7 +5,8 @@ export default function transfersHandler(events) {
   events.onFilter(
     'currencies',
     'Transferred',
-    ({siblings}) => siblings.find(({section}) => section === 'xyk') === undefined,
+    ({siblings}) => siblings.find(({section}) =>
+        section === 'xyk' || section === 'lbp') === undefined,
     transferredHandler
   );
   events.onFilter(

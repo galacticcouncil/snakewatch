@@ -52,7 +52,9 @@ export class Events {
   }
 
   async emitFromBlock(blocknumber) {
-    return loadEvents(blocknumber).then(events => this.emit(events));
+    return loadEvents(blocknumber)
+      .then(events => this.emit(events))
+      .catch(err => console.error(`failed to load ${blocknumber}:`, err.toString()));
   }
 
   useHandledCallback(callback) {

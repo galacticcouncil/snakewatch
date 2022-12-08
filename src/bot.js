@@ -27,6 +27,7 @@ async function main() {
   if (process.env.NODE_ENV === 'test') {
     console.log('testing mode: pushing testing blocks');
     const blockNumbers = new Set([]);
+    blockNumbers.add(3871293812);
     blockNumbers.add(387129); // buy
     blockNumbers.add(387130); // sell
     blockNumbers.add(387659); // add

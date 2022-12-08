@@ -52,5 +52,6 @@ export function getPrice(asset, target) {
 
 export const formatAccount = (address, whale, icon = `🐍`) => (whale ? '🐋' : icon) + `\`${address.toString().substr(-3)}\``;
 export const formatAmount = ({amount, currencyId}) => new Intl.NumberFormat('en-US', {maximumSignificantDigits: 4})
-  .format(Number(amount) / 10 ** 12) + ' ' + (currencies[currencyId].symbol || currencies[currencyId].name);
+  .format(Number(amount) / 10 ** (currencies[currencyId].decimals || 12)).replace(/,/g, " ")
+  + ' ' + (currencies[currencyId].symbol || currencies[currencyId].name);
 export const formatUsdValue = value => value ? ` *~ ${formatAmount({amount: value, currencyId: usdCurrencyId})}*` : '';

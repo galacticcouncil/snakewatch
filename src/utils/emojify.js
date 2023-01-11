@@ -10,6 +10,6 @@ const emojis = ['🌚', '🌝', '<:cheems:989553853785587723>', '🐁', '🐂', 
  * <:cheems:989553853785587723>
  */
 const degens = {
-  '7M5sSEFabSS3DmYmLhhj5P7C22CrPUqcpmgVcfL5agewjB27': '<:soicry:950037490432094239>',
+  '7M5sSEFabSS3DmYmLhhj5P7C22CrPUqcpmgVcfL5agewjB27': '<:cheems:989553853785587723>',
   '7MsLP8yfa4dzCAyBX5jxDk2UR7DEATQYNcfpMxgnRDWx6Xin': '<:buffdoge:989553819539103764>',
 };

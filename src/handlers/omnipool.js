@@ -2,6 +2,7 @@ import {swapHandler} from "./xyk.js";
 import {formatAccount, formatAmount, formatUsdValue, isWhale, usdValue} from "../currencies.js";
 import {broadcast} from "../discord.js";
 import {usdCurrencyId} from "../config.js";
+import {emojify} from "../utils/emojify.js";
 
 export default function omnipoolHandler(events) {
   events
@@ -36,6 +37,3 @@ async function liquidityRemovedHandler({event, siblings}) {
   const message = `🚰 omnipool dehydrated of **${formatAmount(removed)}**${formatUsdValue(value)} by ${formatAccount(who, isWhale(value), emojify(who))}`;
   broadcast(message);
 }
-
-const emojify = address => emojis[Number(address.toHex()) % emojis.length];
-const emojis = ['🌚', '🌝', '<:cheems:989553853785587723>', '🐁', '🐂', '🐃', '🐄', '🐅', '🐆', '🐇', '🐈', '🐉', '🐊', '🐋', '🐌', '🐎', '🐏', '🐐', '🐑', '🐓', '🐕', '🐖', '🐗', '🐘', '🐙', '🐛', '🐝', '🐞', '🐡', '🐢', '🐨', '🐭', '🐮', '🐯', '🐰', '🐲', '🐴', '🐵', '🐶', '🐷', '🐸', '🐹', '🐺', '🐻', '🐼', '🐿', '👹', '👺', '👻', '👼', '👽', '👾', '👿', '💀', '🙉', '🚁', '🚜', '🚶', '🛩', '🛳', '🤖', '🦀', '🦁', '🦂', '🦃', '🦄'];

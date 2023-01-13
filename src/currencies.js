@@ -54,4 +54,12 @@ export const formatAccount = (address, whale, icon = `🐍`) => (whale ? '🐋' 
 export const formatAmount = ({amount, currencyId}) => new Intl.NumberFormat('en-US', {maximumSignificantDigits: 4})
   .format(Number(amount) / 10 ** (currencies[currencyId].decimals || 12)).replace(/,/g, " ")
   + ' ' + (currencies[currencyId].symbol || currencies[currencyId].name || (Number(currencyId) === 0 ? 'HDX' : ''));
-export const formatUsdValue = value => value ? ` *~ ${formatAmount({amount: value, currencyId: usdCurrencyId})}*` : '';
+export const formatUsdValue = value => {
+  if (!value) {
+    return '';
+  }
+  let amount = Number(value) / 10 ** (currencies[usdCurrencyId].decimals || 12);
+  amount = amount > 1 ? Math.round(amount) : amount;
+  const symbol = currencies[usdCurrencyId].symbol || currencies[usdCurrencyId].name || 'USD';
+  return ` *~ ${new Intl.NumberFormat('en-US', {maximumSignificantDigits: 4, maximumFractionDigits: 2}).format(amount).replace(/,/g, " ")} ${symbol}*`;
+};

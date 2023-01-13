@@ -61,5 +61,5 @@ export const formatUsdValue = value => {
   let amount = Number(value) / 10 ** (currencies[usdCurrencyId].decimals || 12);
   amount = amount > 1 ? Math.round(amount) : amount;
   const symbol = currencies[usdCurrencyId].symbol || currencies[usdCurrencyId].name || 'USD';
-  return ` *~ ${new Intl.NumberFormat('en-US', {maximumSignificantDigits: 4, maximumFractionDigits: 2}).format(amount).replace(/,/g, " ")} ${symbol}*`;
+  return ` *~ ${new Intl.NumberFormat('en-US', {maximumSignificantDigits: amount < 1 ? 1 : 4, maximumFractionDigits: 2}).format(amount).replace(/,/g, " ")} ${symbol}*`;
 };

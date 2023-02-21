@@ -19,8 +19,8 @@ const degens = {
   '7LU16Y84xGTMHxbKp2DDmmeSks8Zitzf1prf2P226Fs1FrWA': '<:Charizard:1074723144209809519>',
   '7HcZDdrcvbjL8CeqK7J8oypnBMCfrHPTcpH6QvM2xXbRDyZt': '<:bulbasaur:1064486523715719208>',
   '7MAvv6YQeXULbpNAKWceqA6voTLoioDzm71ggvWzstyPDepm': '<:sir:1069817913088946276>',
-  '7JnnrDVoGrXA68TuQMVasG8TD8D2iagjmBA3bSEYyBHphbvy': '<:palm_tree:>',
-  '7LxFHadXE2giKvJsi7ybcvjriXjazAtGwBE1ptnUxLWDv4uy': '<:mushroom:>',
-  '7L53bUTBopuwFt3mKUfmkzgGLayYa1Yvn1hAg9v5UMrQzTfh': '<:bank:>',
+  '7JnnrDVoGrXA68TuQMVasG8TD8D2iagjmBA3bSEYyBHphbvy': '🌴',
+  '7LxFHadXE2giKvJsi7ybcvjriXjazAtGwBE1ptnUxLWDv4uy': '🍄',
+  '7L53bUTBopuwFt3mKUfmkzgGLayYa1Yvn1hAg9v5UMrQzTfh': '🏦',
   
 };

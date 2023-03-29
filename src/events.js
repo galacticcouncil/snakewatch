@@ -76,7 +76,7 @@ export const loadEvents = async blockNumber => api().rpc.chain.getBlockHash(bloc
 
 export const processEvents = events => events.map(event => ({
   siblings: events
-    .filter(({phase}) => phase.isApplyExtrinsic
+    .filter(({phase}) => phase.isInitialization || phase.isApplyExtrinsic
       && event.phase.isApplyExtrinsic
       && phase.asApplyExtrinsic.eq(event.phase.asApplyExtrinsic))
     .map(({event}) => event),

@@ -9,7 +9,10 @@ const prices = {};
 export const isWhale = amount => amount >= whaleAmount;
 
 export function currenciesHandler(events) {
-  events.onSection('currencies', ({event: {data: {currencyId}}}) => currencyId && loadCurrency([currencyId]))
+  events
+    .onSection('currencies', ({event: {data: {currencyId}}}) => currencyId && loadCurrency([currencyId]))
+    .onSection('tokens', ({event: {data: {currencyId}}}) => currencyId && loadCurrency([currencyId]))
+    .on('otc', 'Placed', ({event: {data: {assetIn}}}) => assetIn && loadCurrency(assetIn))
 }
 
 async function loadCurrency(id) {

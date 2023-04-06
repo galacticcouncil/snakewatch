@@ -5,7 +5,7 @@ export default function transfersHandler(events) {
   events.onFilter(
     'currencies',
     'Transferred',
-    ({siblings}) => siblings.find(({section}) => ['xyk', 'lbp', 'omnipool'].includes(section)) === undefined,
+    ({siblings}) => siblings.find(({section}) => ['xyk', 'lbp', 'omnipool', 'otc'].includes(section)) === undefined,
     transferredHandler
   );
   events.onFilter(

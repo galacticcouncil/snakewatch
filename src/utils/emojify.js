@@ -23,5 +23,6 @@ const degens = {
   '7LxFHadXE2giKvJsi7ybcvjriXjazAtGwBE1ptnUxLWDv4uy': '🍄',
   '7L53bUTBopuwFt3mKUfmkzgGLayYa1Yvn1hAg9v5UMrQzTfh': '🏦',
   '7LGWvFudYrVdJYxG8ekhFSpgzfN4e7BbTzTKpi3wAr1BPrsB': '<:Dragonite:1074723182944198666>',
+  '7Nws2zozshPbEmKXRaFch2H21PPT5jT76mckZGRd1iokfAUQ': '<:Venusaur:1074723145518432268>',
   
 };

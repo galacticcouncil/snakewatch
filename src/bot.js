@@ -5,6 +5,7 @@ import lbp from "./handlers/lbp.js";
 import omnipool from "./handlers/omnipool.js";
 import transfers from "./handlers/transfers.js";
 import otc from "./handlers/otc.js";
+import dca from "./handlers/dca.js";
 import {initDiscord} from "./discord.js";
 import {rpc, sha, token, channel} from "./config.js";
 import {currenciesHandler} from "./currencies.js";
@@ -24,6 +25,7 @@ async function main() {
   events.addHandler(lbp);
   events.addHandler(omnipool);
   events.addHandler(otc);
+  events.addHandler(dca)
   events.addHandler(transfers);
 
   if (process.env.NODE_ENV === 'test') {

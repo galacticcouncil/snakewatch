@@ -59,7 +59,7 @@ function broadcastBuffer(scheduleId) {
       assetOut,
       amountIn,
       amountOut
-    }, emojify(who), `split over **${executions.length}** swaps`);
+    }, emojify(who), `split over ${executions.length} swaps`);
   }
 }
 

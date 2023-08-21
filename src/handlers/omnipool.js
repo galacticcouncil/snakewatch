@@ -33,8 +33,17 @@ async function liquidityAddedHandler({event}) {
 
 async function liquidityRemovedHandler({event, siblings}) {
   const {who, assetId: currencyId} = event.data;
-  const {data: removed} = siblings.find(({method, data: {to}}) => method === 'Transferred' && to.toString() === who.toString());
-  const value = currencyId.toString() !== usdCurrencyId ? usdValue(removed) : null;
-  const message = `🚰 omnipool dehydrated of **${formatAmount(removed)}**${formatUsdValue(value)} by ${formatAccount(who, isWhale(value), emojify(who))}`;
+  const transfers = siblings
+    .slice(0, siblings.indexOf(event))
+    .reverse()
+    .filter(({method, data: {to}}) => method === 'Transferred' && to.toString() === who.toString());
+  let asset = transfers[0].data;
+  let lrna = '';
+  if (asset.currencyId.toNumber() === 1) {
+    lrna = ' + ' + formatAmount(asset);
+    asset = transfers[1].data;
+  }
+  const value = currencyId.toString() !== usdCurrencyId ? usdValue(asset) : null;
+  const message = `🚰 omnipool dehydrated of **${formatAmount(asset)}**${formatUsdValue(value)}${lrna} by ${formatAccount(who, isWhale(value), emojify(who))}`;
   broadcast(message);
 }

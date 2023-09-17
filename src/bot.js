@@ -33,22 +33,25 @@ async function main() {
   if (process.env.NODE_ENV === 'test') {
     console.log('testing mode: pushing testing blocks');
     const blockNumbers = new Set([]);
-    blockNumbers.add(3871293812);
-    blockNumbers.add(387129); // buy
-    blockNumbers.add(387130); // sell
-    blockNumbers.add(387659); // add
-    blockNumbers.add(387667); // remove
-    blockNumbers.add(387677); // remove all
+    blockNumbers.add(3421767);
+    blockNumbers.add(3406981);
+    blockNumbers.add(3423823);
+    blockNumbers.add(3423655);
+    // blockNumbers.add(387129); // buy
+    // blockNumbers.add(387130); // sell
+    // blockNumbers.add(387659); // add
+    // blockNumbers.add(387667); // remove
+    // blockNumbers.add(387677); // remove all
 
     for (const height of [...blockNumbers].sort()) {
       await events.emitFromBlock(height);
     }
-    const lookBack = 100;
-    console.log(`testing mode: pushing last ${lookBack} blocks`);
-    const lastBlock = await api().query.system.number();
-    for (let i = lastBlock - lookBack; i <= lastBlock; i++) {
-      await events.emitFromBlock(i);
-    }
+    // const lookBack = 100;
+    // console.log(`testing mode: pushing last ${lookBack} blocks`);
+    // const lastBlock = await api().query.system.number();
+    // for (let i = lastBlock - lookBack; i <= lastBlock; i++) {
+    //   await events.emitFromBlock(i);
+    // }
   }
 
   console.log('watching for new blocks');

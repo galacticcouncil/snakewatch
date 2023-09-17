@@ -1,4 +1,4 @@
-import {formatAccount, formatAmount} from "../currencies.js";
+import {formatAccount, formatAmount, hdx} from "../currencies.js";
 import {broadcast} from "../discord.js";
 import {emojify} from "../utils/emojify.js";
 
@@ -11,20 +11,15 @@ export default function stakingHandler(events) {
 }
 
 async function stakeHandler({event: {data: {who, stake}}}) {
-  const amount = {currencyId: 0, amount: stake};
-  const message = `${formatAccount(who, false, emojify(who))} staked **${formatAmount(amount)}**`;
-  broadcast(message);
+  broadcast(`${formatAccount(who, false, emojify(who))} staked **${formatAmount(hdx(stake))}**`);
 }
 
-async function unstakeHandler({event: {data: {who, unlockedStake}}}) {
-  const amount = {currencyId: 0, amount: unlockedStake};
-  const message = `${formatAccount(who, false, emojify(who))} unstaked **${formatAmount(amount)}** <:cheems:989553853785587723>`;
-  broadcast(message);
+async function unstakeHandler({event: {data: {who, unlockedStake, rewards}}}) {
+  broadcast(`${formatAccount(who, false, emojify(who))} unstaked **${formatAmount(hdx(unlockedStake))}** <:cheems:989553853785587723> and claimed **${formatAmount(hdx(rewards))}**`);
 }
 
 async function rewardsClaimedHandler({event: {data: {who, paidRewards, slashedUnpaidRewards}}}) {
-  const amount = {currencyId: 0, amount: paidRewards};
   const percentage = new Intl.NumberFormat('en-US').format((paidRewards / (slashedUnpaidRewards+paidRewards)) * 100);
-  const message = `${formatAccount(who, false, emojify(who))} claimed **${formatAmount(amount)}** (${percentage}% of allocated reward)`;
+  const message = `${formatAccount(who, false, emojify(who))} claimed **${formatAmount(hdx(paidRewards))}** (${percentage}% of allocated reward)`;
   broadcast(message);
 }

@@ -4,6 +4,7 @@ import xyk from "./handlers/xyk.js";
 import lbp from "./handlers/lbp.js";
 import omnipool from "./handlers/omnipool.js";
 import stableswap from "./handlers/stableswap.js";
+import router from "./handlers/router.js";
 import transfers from "./handlers/transfers.js";
 import otc from "./handlers/otc.js";
 import dca from "./handlers/dca.js";
@@ -27,6 +28,7 @@ async function main() {
   events.addHandler(lbp);
   events.addHandler(omnipool);
   events.addHandler(stableswap);
+  events.addHandler(router);
   events.addHandler(otc);
   events.addHandler(dca)
   events.addHandler(transfers);

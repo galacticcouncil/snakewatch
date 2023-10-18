@@ -3,12 +3,12 @@ import {formatAccount, formatAmount, formatUsdValue, isWhale, usdValue} from "..
 import {broadcast} from "../discord.js";
 import {usdCurrencyId} from "../config.js";
 import {emojify} from "../utils/emojify.js";
-import {notInDca} from "./dca.js";
+import {notInRouter} from "./router.js";
 
 export default function omnipoolHandler(events) {
   events
-    .onFilter('omnipool', 'SellExecuted', notInDca, sellHandler)
-    .onFilter('omnipool', 'BuyExecuted', notInDca, buyHandler)
+    .onFilter('omnipool', 'SellExecuted', notInRouter, sellHandler)
+    .onFilter('omnipool', 'BuyExecuted', notInRouter, buyHandler)
     .on('omnipool', 'LiquidityAdded', liquidityAddedHandler)
     .on('omnipool', 'LiquidityRemoved', liquidityRemovedHandler);
 }

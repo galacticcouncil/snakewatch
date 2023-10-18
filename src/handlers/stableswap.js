@@ -3,14 +3,14 @@ import {sellHandler, buyHandler} from "./omnipool.js";
 import {formatAccount, formatAmount, formatUsdValue, isWhale, usdValue} from "../currencies.js";
 import {broadcast} from "../discord.js";
 import {emojify} from "../utils/emojify.js";
-import {notInDca} from "./dca.js";
+import {notInRouter} from "./router.js";
 
 export default function stableswapHandler(events) {
   events
-    .onFilter('stableswap', 'SellExecuted', notInDca, sellHandler)
-    .onFilter('stableswap', 'BuyExecuted', notInDca, buyHandler)
-    .onFilter('stableswap', 'LiquidityAdded', notInDca, liquidityAddedHandler)
-    .onFilter('stableswap', 'LiquidityRemoved', notInDca, liquidityRemovedHandler);
+    .onFilter('stableswap', 'SellExecuted', notInRouter, sellHandler)
+    .onFilter('stableswap', 'BuyExecuted', notInRouter, buyHandler)
+    .onFilter('stableswap', 'LiquidityAdded', notInRouter, liquidityAddedHandler)
+    .onFilter('stableswap', 'LiquidityRemoved', notInRouter, liquidityRemovedHandler);
 }
 
 async function liquidityAddedHandler({event: {data: {who, poolId, shares, assets}}}) {

@@ -55,10 +55,12 @@ export function getPrice(asset, target) {
 
 export const hdx = amount => ({currencyId: 0, amount});
 
+export const symbol = currencyId => currencies[currencyId].symbol || currencies[currencyId].name || (Number(currencyId) === 0 ? 'HDX' : '');
+export const decimals = currencyId => currencies[currencyId].assetType === 'StableSwap' ? 18 : currencies[currencyId].decimals || 12;
+
 export const formatAccount = (address, whale, icon = `🐍`) => (whale ? '🐋' : icon) + `\`${address.toString().substr(-3)}\``;
 export const formatAmount = ({amount, currencyId}) => new Intl.NumberFormat('en-US', {maximumSignificantDigits: 4})
-  .format(Number(amount) / 10 ** (currencies[currencyId].decimals || 12)).replace(/,/g, " ")
-  + ' ' + (currencies[currencyId].symbol || currencies[currencyId].name || (Number(currencyId) === 0 ? 'HDX' : ''));
+  .format(Number(amount) / 10 ** decimals(currencyId)).replace(/,/g, " ") + ' ' + symbol(currencyId);
 export const formatUsdValue = value => {
   if (!value) {
     return '';

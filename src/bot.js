@@ -33,10 +33,7 @@ async function main() {
   if (process.env.NODE_ENV === 'test') {
     console.log('testing mode: pushing testing blocks');
     const blockNumbers = new Set([]);
-    blockNumbers.add(3421767);
-    blockNumbers.add(3423823);
-    blockNumbers.add(3423655);
-    blockNumbers.add(3422996);
+    blockNumbers.add(3640400);
 
     for (const height of [...blockNumbers].sort()) {
       await events.emitFromBlock(height);

@@ -3,6 +3,7 @@ import {Events} from "./events.js";
 import xyk from "./handlers/xyk.js";
 import lbp from "./handlers/lbp.js";
 import omnipool from "./handlers/omnipool.js";
+import stableswap from "./handlers/stableswap.js";
 import transfers from "./handlers/transfers.js";
 import otc from "./handlers/otc.js";
 import dca from "./handlers/dca.js";
@@ -25,6 +26,7 @@ async function main() {
   events.addHandler(xyk);
   events.addHandler(lbp);
   events.addHandler(omnipool);
+  events.addHandler(stableswap);
   events.addHandler(otc);
   events.addHandler(dca)
   events.addHandler(transfers);
@@ -33,7 +35,11 @@ async function main() {
   if (process.env.NODE_ENV === 'test') {
     console.log('testing mode: pushing testing blocks');
     const blockNumbers = new Set([]);
-    blockNumbers.add(3640400);
+    blockNumbers.add(3640483);
+    blockNumbers.add(3640479);
+    blockNumbers.add(3640440);
+    blockNumbers.add(3640419);
+    blockNumbers.add(3640110);
 
     for (const height of [...blockNumbers].sort()) {
       await events.emitFromBlock(height);

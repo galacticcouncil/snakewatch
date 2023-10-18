@@ -25,7 +25,6 @@ export class Events {
   startWatching() {
     this.killWatcher = api().query.system.number(head => {
       const block = head.toNumber() - 1;
-      console.log(`block ${block}`);
       this.emitFromBlock(block);
     });
   }
@@ -52,6 +51,7 @@ export class Events {
   }
 
   async emitFromBlock(blocknumber) {
+    console.log(`block ${blocknumber}`);
     return loadEvents(blocknumber)
       .then(events => this.emit(events))
       .catch(err => console.error(`failed to load ${blocknumber}:`, err.toString()));

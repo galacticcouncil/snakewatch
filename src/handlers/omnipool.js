@@ -13,12 +13,12 @@ export default function omnipoolHandler(events) {
     .on('omnipool', 'LiquidityRemoved', liquidityRemovedHandler);
 }
 
-async function sellHandler({event}) {
+export async function sellHandler({event}) {
   const {who, assetIn, assetOut, amountIn, amountOut} = event.data;
   return swapHandler({who, assetIn, assetOut, amountIn, amountOut}, emojify(who));
 }
 
-async function buyHandler({event}) {
+export async function buyHandler({event}) {
   const {who, assetIn, assetOut, amountIn, amountOut} = event.data;
   return swapHandler({who, assetIn, assetOut, amountIn, amountOut}, emojify(who));
 }

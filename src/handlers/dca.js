@@ -6,6 +6,7 @@ import process from 'node:process';
 export default function otcHandler(events) {
   events
     .on('dca', 'TradeExecuted', tradeExecuted)
+    .on('dca', 'Terminated', terminatedHandler)
 }
 
 export const notInDca = ({siblings}) => siblings.find(({method}) => ['ExecutionStarted'].includes(method)) === undefined;
@@ -40,6 +41,13 @@ async function tradeExecuted({event, siblings, blockNumber}) {
     } else {
       return swapHandler({who, ...trade.data}, emojify(who));
     }
+  }
+}
+
+function terminatedHandler({event}) {
+  const scheduleId = event.data.id.toNumber();
+  if (buffer.find(({id}) => id === scheduleId)) {
+    return broadcastBuffer(scheduleId);
   }
 }
 

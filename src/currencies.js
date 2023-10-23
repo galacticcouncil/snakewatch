@@ -21,7 +21,13 @@ async function loadCurrency(id) {
       api().query.assetRegistry.assets(id),
       api().query.assetRegistry.assetMetadataMap(id)
     ]);
-    currencies = {...currencies, [id]: {...asset.toHuman(), ...metadata.toHuman()}};
+    let currency = {...asset.toHuman(), ...metadata.toHuman()};
+    if (currency.assetType === 'Bond') {
+      const bond = await api().query.bonds.bonds(id);
+      const [parent, maturity] = bond.toHuman();
+      currency = {...currency, parent, maturity};
+    }
+    currencies = {...currencies, [id]: currency};
   }
 }
 
@@ -55,8 +61,19 @@ export function getPrice(asset, target) {
 
 export const hdx = amount => ({currencyId: 0, amount});
 
-export const symbol = currencyId => currencies[currencyId].symbol || currencies[currencyId].name || (Number(currencyId) === 0 ? 'HDX' : '');
-export const decimals = currencyId => currencies[currencyId].assetType === 'StableSwap' ? 18 : currencies[currencyId].decimals || 12;
+export const symbol = currencyId => {
+  const currency = currencies[currencyId];
+  if (currency.assetType === 'Bond') {
+    return symbol(currency.parent) + 'b';
+  }
+  return currency.symbol || currency.name || (Number(currencyId) === 0 ? 'HDX' : '');
+}
+export const decimals = currencyId => {
+  const currency = currencies[currencyId];
+  if (currency.assetType === 'StableSwap') return 18;
+  if (currency.parent) return decimals(currency.parent);
+  return currency.decimals || 12;
+}
 
 export const formatAccount = (address, whale, icon = `🐍`) => (whale ? '🐋' : icon) + `\`${address.toString().substr(-3)}\``;
 export const formatAmount = ({amount, currencyId}) => new Intl.NumberFormat('en-US', {maximumSignificantDigits: 4})

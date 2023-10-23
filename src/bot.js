@@ -46,7 +46,7 @@ async function main() {
     for (const height of [...blockNumbers].sort()) {
       await events.emitFromBlock(height);
     }
-    const lookBack = 100;
+    const lookBack = 500;
     console.log(`testing mode: pushing last ${lookBack} blocks`);
     const lastBlock = await api().query.system.number();
     for (let i = lastBlock - lookBack; i <= lastBlock; i++) {

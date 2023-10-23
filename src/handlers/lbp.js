@@ -1,18 +1,20 @@
 import {swapHandler} from "./xyk.js";
+import {notInRouter} from "./router.js";
+import {emojify} from "../utils/emojify.js";
 
 export default function lbpHandler(events) {
   events
-    .on('lbp', 'SellExecuted', sellHandler)
-    .on('lbp', 'BuyExecuted', buyHandler)
+    .onFilter('lbp', 'SellExecuted', notInRouter, sellHandler)
+    .onFilter('lbp', 'BuyExecuted', notInRouter, buyHandler)
 }
 
 async function sellHandler({event}) {
   const {who, assetIn, assetOut, amount, salePrice: amountOut, feeAsset, feeAmount} = event.data;
   const amountIn = Number(assetIn) === Number(feeAsset) ? amount.add(feeAmount) : amount;
-  return swapHandler({who, assetIn, assetOut, amountIn, amountOut}, '⚙');
+  return swapHandler({who, assetIn, assetOut, amountIn, amountOut}, emojify(who));
 }
 
 async function buyHandler({event}) {
   const {who, assetIn, assetOut, amount: amountIn, buyPrice: amountOut} = event.data;
-  return swapHandler({who, assetIn, assetOut, amountIn, amountOut}, '⚙');
+  return swapHandler({who, assetIn, assetOut, amountIn, amountOut}, emojify(who));
 }

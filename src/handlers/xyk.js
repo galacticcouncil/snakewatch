@@ -7,11 +7,12 @@ import {
   usdValue
 } from "../currencies.js";
 import {usdCurrencyId} from "../config.js";
+import {notInRouter} from "./router.js";
 
 export default function xykHandler(events) {
   events
-    .on('xyk', 'SellExecuted', sellHandler)
-    .on('xyk', 'BuyExecuted', buyHandler)
+    .onFilter('xyk', 'SellExecuted', notInRouter, sellHandler)
+    .onFilter('xyk', 'BuyExecuted', notInRouter, buyHandler)
     .on('xyk', 'LiquidityAdded', liquidityAddedHandler)
     .on('xyk', 'LiquidityRemoved', liquidityRemovedHandler)
 }

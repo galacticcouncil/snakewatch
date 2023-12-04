@@ -25,5 +25,5 @@ const degens = {
   '7LGWvFudYrVdJYxG8ekhFSpgzfN4e7BbTzTKpi3wAr1BPrsB': '<:Dragonite:1074723182944198666>',
   '7Nws2zozshPbEmKXRaFch2H21PPT5jT76mckZGRd1iokfAUQ': '<:Venusaur:1074723145518432268>',
   '7L1jebaeGNykbey5gZhZCD4PLVLtjPm5RKpKXRYV4NXsF6TM': '🦍',
-  
+  '7KQx4f7yU3hqZHfvDVnSfe6mpgAT8Pxyr67LXHV6nsbZo3Tm': '<:polkadot:1064520790978080818>',
 };

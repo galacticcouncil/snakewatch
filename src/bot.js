@@ -37,6 +37,7 @@ async function main() {
   if (process.env.NODE_ENV === 'test') {
     console.log('testing mode: pushing testing blocks');
     const blockNumbers = new Set([]);
+    blockNumbers.add(4012925);
     blockNumbers.add(3640483);
     blockNumbers.add(3640479);
     blockNumbers.add(3640440);

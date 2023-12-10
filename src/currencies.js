@@ -1,6 +1,7 @@
 import {api} from "./api.js";
 import dijkstrajs from "dijkstrajs";
 import {usdCurrencyId, whaleAmount} from "./config.js";
+import {fromAccount} from "./utils/evm.js";
 
 let currencies = {};
 
@@ -75,7 +76,9 @@ export const decimals = currencyId => {
   return currency.decimals || 12;
 }
 
-export const formatAccount = (address, whale, icon = `🐍`) => (whale ? '🐋' : icon) + `\`${address.toString().substr(-3)}\``;
+const short = address => (fromAccount(address.toString()) || address.toString()).substr(-3);
+
+export const formatAccount = (address, whale, icon = `🐍`) => (whale ? '🐋' : icon) + `\`${short(address)}\``;
 export const formatAmount = ({amount, currencyId}) => new Intl.NumberFormat('en-US', {maximumSignificantDigits: 4})
   .format(Number(amount) / 10 ** decimals(currencyId)).replace(/,/g, " ") + ' ' + symbol(currencyId);
 export const formatUsdValue = value => {

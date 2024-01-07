@@ -19,7 +19,7 @@ async function unstakeHandler({event: {data: {who, unlockedStake, rewards}}}) {
 }
 
 async function rewardsClaimedHandler({event: {data: {who, paidRewards, slashedUnpaidRewards}}}) {
-  const percentage = new Intl.NumberFormat('en-US').format((paidRewards / (slashedUnpaidRewards+paidRewards)) * 100);
-  const message = `${formatAccount(who, false, emojify(who))} claimed **${formatAmount(hdx(paidRewards))}**`;
+  const percentage = Math.round((paidRewards / (slashedUnpaidRewards+paidRewards)) * 100);
+  const message = `${formatAccount(who, false, emojify(who))} claimed **${formatAmount(hdx(paidRewards))}** (${percentage}% of allocated reward)`;
   broadcast(message);
 }

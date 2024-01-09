@@ -20,6 +20,8 @@ async function unstakeHandler({event, siblings}) {
 }
 
 async function rewardsClaimedHandler({event: {data: {who, paidRewards, slashedUnpaidRewards}}}) {
-  const message = `${formatAccount(who, false, emojify(who))} claimed **${formatAmount(hdx(paidRewards))}** and forfeited **${formatAmount(hdx(slashedUnpaidRewards))}**`;
-  broadcast(message);
+  if (Number(paidRewards) > 0) {
+    const message = `${formatAccount(who, false, emojify(who))} claimed **${formatAmount(hdx(paidRewards))}** and forfeited **${formatAmount(hdx(slashedUnpaidRewards))}**`;
+    broadcast(message);
+  }
 }

@@ -28,10 +28,12 @@ async function transferHandler({event: {data: {amount}}, blockNumber})  {
 }
 
 function report() {
-  const amount = {amount: accrued, currencyId: 0};
-  const value = usdValue(amount);
-  const message = `💸 **${formatAmount(amount)}**${formatUsdValue(value)} bought for rewards`;
-  broadcast(message);
+  if (accrued > 0) {
+    const amount = {amount: accrued, currencyId: 0};
+    const value = usdValue(amount);
+    const message = `💸 **${formatAmount(amount)}**${formatUsdValue(value)} bought for rewards`;
+    broadcast(message);
+  }
 }
 
 ['SIGHUP', 'SIGINT', 'SIGQUIT', 'SIGILL', 'SIGTRAP', 'SIGABRT',

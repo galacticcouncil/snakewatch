@@ -4,10 +4,11 @@ import {broadcast} from "../discord.js";
 import {usdCurrencyId} from "../config.js";
 import {emojify} from "../utils/emojify.js";
 import {notInRouter} from "./router.js";
+import {notByReferralPot} from "./referrals.js";
 
 export default function omnipoolHandler(events) {
   events
-    .onFilter('omnipool', 'SellExecuted', notInRouter, sellHandler)
+    .onFilter('omnipool', 'SellExecuted', e => notInRouter(e) && notByReferralPot(e), sellHandler)
     .onFilter('omnipool', 'BuyExecuted', notInRouter, buyHandler)
     .on('omnipool', 'LiquidityAdded', liquidityAddedHandler)
     .on('omnipool', 'LiquidityRemoved', liquidityRemovedHandler);

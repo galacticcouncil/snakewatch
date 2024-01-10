@@ -24,7 +24,7 @@ async function filledHandler({event, siblings}) {
     .slice(0, siblings.indexOf(event))
     .reverse()
     .filter(({method}) => method === 'Transfer')
-    .map(({data}) => data);
+    .map(({data}) => ({currencyId: 0, ...data}));
   const message = `${formatAccount(who, false, emojify(who))} swapped **${formatAmount(a)}** for **${formatAmount(b)}** OTC`;
   broadcast(message);
 }

@@ -76,9 +76,14 @@ export const decimals = currencyId => {
   return currency.decimals || 12;
 }
 
-const short = address => (fromAccount(address.toString()) || address.toString()).substr(-3);
+const short = address => "`" + (fromAccount(address.toString()) || address.toString()).substr(-3) + "`";
+const url = (prefix, address) => `[${short(address)}](${prefix}/${address})`;
+const maybeUrl = address => {
+  const explorer = process.env.EXPLORER;
+  return explorer ? url(explorer, address) : short(address);
+}
 
-export const formatAccount = (address, whale, icon = `🐍`) => (whale ? '🐋' : icon) + `\`${short(address)}\``;
+export const formatAccount = (address, whale, icon = `🐍`) => (whale ? '🐋' : icon) + `${maybeUrl(address)}`;
 export const formatAmount = ({amount, currencyId}) => new Intl.NumberFormat('en-US', {maximumSignificantDigits: 4})
   .format(Number(amount) / 10 ** decimals(currencyId)).replace(/,/g, " ") + ' ' + symbol(currencyId);
 export const formatUsdValue = value => {

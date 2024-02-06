@@ -13,6 +13,12 @@ export function notInRouter({siblings}) {
 
 function routeExecutedHandler({event, siblings}) {
   const {who} = siblings.find(({method}) => method === 'TransactionFeePaid').data;
+  if (isBuy({event, siblings})) return;
   const {assetIn, assetOut, amountIn, amountOut} = event.data;
   return swapHandler({who, assetIn, assetOut, amountIn, amountOut}, emojify(who));
 }
+
+const isBuy = ({event, siblings}) => siblings
+    .slice(0, siblings.indexOf(event))
+    .reverse()
+    .find(({method}) => method === 'BuyExecuted');

@@ -4,17 +4,19 @@ import {emojify} from "../utils/emojify.js";
 
 export default function routerHandler(events) {
   events
-    .onFilter('router', 'RouteExecuted', notInDca, routeExecutedHandler)
+    .onFilter('router', 'Executed', notInDca, routeExecutedHandler)
 }
 
 export function notInRouter({siblings}) {
-  return siblings.find(({method}) => ['RouteExecuted'].includes(method)) === undefined;
+  return siblings.find(({method}) => ['Executed'].includes(method)) === undefined;
 }
 
 function routeExecutedHandler({event, siblings}) {
   const {who} = siblings.find(({method}) => method === 'TransactionFeePaid').data;
-  if (isBuy({event, siblings})) return;
-  const {assetIn, assetOut, amountIn, amountOut} = event.data;
+  let {assetIn, assetOut, amountIn, amountOut} = event.data;
+  if (isBuy({event, siblings})) {
+    
+  }
   return swapHandler({who, assetIn, assetOut, amountIn, amountOut}, emojify(who));
 }
 

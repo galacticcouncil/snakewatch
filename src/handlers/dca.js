@@ -21,7 +21,7 @@ async function tradeExecuted({event, siblings, blockNumber}) {
   const trade = siblings
     .slice(0, siblings.indexOf(event))
     .reverse()
-    .find(({method}) => method === 'RouteExecuted');
+    .find(({method}) => method === 'Executed');
   const nextBlock = siblings
     .slice(siblings.indexOf(event) + 1)
     .find(({method}) => method === 'ExecutionPlanned')

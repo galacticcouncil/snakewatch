@@ -26,4 +26,5 @@ const degens = {
   '7Nws2zozshPbEmKXRaFch2H21PPT5jT76mckZGRd1iokfAUQ': '<:Venusaur:1074723145518432268>',
   '7L1jebaeGNykbey5gZhZCD4PLVLtjPm5RKpKXRYV4NXsF6TM': '🦍',
   '7KQx4f7yU3hqZHfvDVnSfe6mpgAT8Pxyr67LXHV6nsbZo3Tm': '<:polkadot:1064520790978080818>',
+  '7LcF8b5GSvajXkSChhoMFcGDxF9Yn9unRDceZj1Q6NYox8HY': '<:polkadot:1064520790978080818>',
 };

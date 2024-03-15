@@ -18,11 +18,7 @@ export function currenciesHandler(events) {
 
 async function loadCurrency(id) {
   if (!currencies[id]) {
-    const [asset, metadata] = await Promise.all([
-      api().query.assetRegistry.assets(id),
-      api().query.assetRegistry.assetMetadataMap(id)
-    ]);
-    let currency = {...asset.toHuman(), ...metadata.toHuman()};
+    let currency = (await api().query.assetRegistry.assets(id)).toHuman();
     if (currency.assetType === 'Bond') {
       const bond = await api().query.bonds.bonds(id);
       const [parent, maturity] = bond.toHuman();

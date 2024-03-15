@@ -19,6 +19,10 @@ export function currenciesHandler(events) {
 async function loadCurrency(id) {
   if (!currencies[id]) {
     let currency = (await api().query.assetRegistry.assets(id)).toHuman();
+    if (api().query.assetRegistry.assetMetadataMap) {
+      const metadata = await api().query.assetRegistry.assetMetadataMap(id);
+      currency = {...currency, ...metadata.toHuman()};
+    }
     if (currency.assetType === 'Bond') {
       const bond = await api().query.bonds.bonds(id);
       const [parent, maturity] = bond.toHuman();

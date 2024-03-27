@@ -3,7 +3,15 @@ import dijkstrajs from "dijkstrajs";
 import {usdCurrencyId, whaleAmount} from "./config.js";
 import {fromAccount} from "./utils/evm.js";
 
-let currencies = {};
+let currencies = {
+  '1000019': {
+    name: 'DED',
+    assetType: 'External',
+    existentialDeposit: '1',
+    symbol: 'DED',
+    decimals: '10'
+  }
+};
 
 const prices = {};
 

@@ -10,6 +10,13 @@ let currencies = {
     existentialDeposit: '1',
     symbol: 'DED',
     decimals: '10'
+  },
+  '1000021': {
+    name: 'PINK',
+    assetType: 'External',
+    existentialDeposit: '1',
+    symbol: 'PINK',
+    decimals: '10'
   }
 };
 
@@ -75,13 +82,13 @@ export const symbol = currencyId => {
   if (currency.assetType === 'Bond') {
     return symbol(currency.parent) + 'b';
   }
-  return currency.symbol || currency.name || (Number(currencyId) === 0 ? 'HDX' : '');
+  return currency.symbol || currency.name || (Number(currencyId) === 0 ? 'HDX' : currencyId);
 }
 export const decimals = currencyId => {
   const currency = currencies[currencyId];
   if (currency.assetType === 'StableSwap') return 18;
   if (currency.parent) return decimals(currency.parent);
-  return currency.decimals || 12;
+  return currency.decimals || 1;
 }
 
 const short = address => "`" + (fromAccount(address.toString()) || address.toString()).substr(-3) + "`";

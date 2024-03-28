@@ -1,5 +1,4 @@
 import {swapHandler} from "./xyk.js";
-import {emojify} from "../utils/emojify.js";
 import {BN} from "@polkadot/util";
 import process from 'node:process';
 
@@ -39,7 +38,7 @@ async function tradeExecuted({event, siblings, blockNumber}) {
       buffer.push({id, who, trade, blockNumber, nextBlock});
       return broadcastBuffer(scheduleId);
     } else {
-      return swapHandler({who, ...trade.data}, emojify(who));
+      return swapHandler({who, ...trade.data});
     }
   }
 }
@@ -59,7 +58,7 @@ function broadcastBuffer(scheduleId) {
   const amountIn = executions.reduce((sum, {trade}) => sum.add(trade.data.amountIn), new BN(0));
   const amountOut = executions.reduce((sum, {trade}) => sum.add(trade.data.amountOut), new BN(0));
   if (executions.length === 1) {
-    return swapHandler({who, assetIn, assetOut, amountIn, amountOut}, emojify(who));
+    return swapHandler({who, assetIn, assetOut, amountIn, amountOut});
   } else {
     return swapHandler({
       who,
@@ -67,7 +66,7 @@ function broadcastBuffer(scheduleId) {
       assetOut,
       amountIn,
       amountOut
-    }, emojify(who), `split over ${executions.length} swaps`);
+    }, `split over ${executions.length} swaps`);
   }
 }
 

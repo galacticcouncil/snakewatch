@@ -1,6 +1,5 @@
 import {formatAccount, formatAmount} from "../currencies.js";
 import {broadcast} from "../discord.js";
-import {emojify} from "../utils/emojify.js";
 
 export default function otcHandler(events) {
   events
@@ -14,7 +13,7 @@ async function placedHandler({event, siblings}) {
   const {assetIn, assetOut, amountIn, amountOut} = event.data;
   const want = {currencyId: assetIn, amount: amountIn};
   const give = {currencyId: assetOut, amount: amountOut};
-  const message = `${formatAccount(who, false, emojify(who))} wants to buy **${formatAmount(want)}** for **${formatAmount(give)}**`
+  const message = `${formatAccount(who)} wants to buy **${formatAmount(want)}** for **${formatAmount(give)}**`
   broadcast(message);
 }
 
@@ -25,6 +24,6 @@ async function filledHandler({event, siblings}) {
     .reverse()
     .filter(({method}) => method === 'Transfer')
     .map(({data}) => ({currencyId: 0, ...data}));
-  const message = `${formatAccount(who, false, emojify(who))} swapped **${formatAmount(a)}** for **${formatAmount(b)}** OTC`;
+  const message = `${formatAccount(who)} swapped **${formatAmount(a)}** for **${formatAmount(b)}** OTC`;
   broadcast(message);
 }

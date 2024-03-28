@@ -2,6 +2,7 @@ import {api} from "./api.js";
 import dijkstrajs from "dijkstrajs";
 import {usdCurrencyId, whaleAmount} from "./config.js";
 import {fromAccount} from "./utils/evm.js";
+import {emojify} from "./utils/emojify.js";
 
 let currencies = {
   '1000019': {
@@ -97,8 +98,8 @@ const maybeUrl = address => {
   const explorer = process.env.EXPLORER;
   return explorer ? url(explorer, address) : short(address);
 }
-
-export const formatAccount = (address, whale, icon = `🐍`) => (whale ? '🐋' : icon) + `${maybeUrl(address)}`;
+export const icon = address => currencies[0]?.symbol === 'HDX' ? emojify(address) : `🐍`;
+export const formatAccount = (address, whale) => (whale ? '🐋' : icon(address)) + `${maybeUrl(address)}`;
 export const formatAmount = ({amount, currencyId}) => new Intl.NumberFormat('en-US', {maximumSignificantDigits: 4})
   .format(Number(amount) / 10 ** decimals(currencyId)).replace(/,/g, " ") + ' ' + symbol(currencyId);
 export const formatUsdValue = value => {

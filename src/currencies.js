@@ -18,6 +18,13 @@ let currencies = {
     existentialDeposit: '1',
     symbol: 'PINK',
     decimals: '10'
+  },
+  '1000034': {
+    name: 'STINK',
+    assetType: 'External',
+    existentialDeposit: '1',
+    symbol: 'STINK',
+    decimals: '10'
   }
 };
 

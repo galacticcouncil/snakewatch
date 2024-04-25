@@ -144,7 +144,9 @@ export const hdx = amount => ({currencyId: 0, amount});
 export const symbol = currencyId => {
   const currency = currencies[currencyId];
   if (currency.assetType === 'Bond') {
-    return symbol(currency.parent) + 'b';
+    return Number(currencyId) === 1000010 ? 'HDXb₁' :
+           Number(currencyId) === 1000013 ? 'HDXb₂' :
+           symbol(currency.parent) + 'b';
   }
   return currency.symbol || currency.name || (Number(currencyId) === 0 ? 'HDX' : currencyId);
 }

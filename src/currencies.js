@@ -81,6 +81,13 @@ let currencies = {
     existentialDeposit: '1',
     symbol: 'DOTA',
     decimals: '4'
+  },
+  '1000085': {
+    name: 'WUD',
+    assetType: 'External',
+    existentialDeposit: '1',
+    symbol: 'WUD',
+    decimals: '10'
   }
 };
 

@@ -19,12 +19,68 @@ let currencies = {
     symbol: 'PINK',
     decimals: '10'
   },
+  '1000023': {
+    name: 'IceCreamToken',
+    assetType: 'External',
+    existentialDeposit: '1',
+    symbol: 'ICE',
+    decimals: '20'
+  },
+  '1000026': {
+    name: 'Efinity Token',
+    assetType: 'External',
+    existentialDeposit: '1',
+    symbol: 'EFI',
+    decimals: '18'
+  },
+  '1000027': {
+    name: 'web3.online',
+    assetType: 'External',
+    existentialDeposit: '1',
+    symbol: 'web3',
+    decimals: '18'
+  },
+  '1000028': {
+    name: 'Polkadot Index',
+    assetType: 'External',
+    existentialDeposit: '1',
+    symbol: 'PINT',
+    decimals: '12'
+  },
+  '1000029': {
+    name: 'Danger Coin',
+    assetType: 'External',
+    existentialDeposit: '1',
+    symbol: 'DANGER',
+    decimals: '8'
+  },
   '1000034': {
     name: 'STINK',
     assetType: 'External',
     existentialDeposit: '1',
     symbol: 'STINK',
     decimals: '10'
+  },
+  '1000035': {
+    name: 'BEER',
+    assetType: 'External',
+    existentialDeposit: '1',
+    symbol: 'BEER',
+    decimals: '6'
+  },
+  '1000036': {
+    name: 'BEEFY',
+    assetType: 'External',
+    existentialDeposit: '1',
+    symbol: 'BEEFY',
+    decimals: '2'
+  },
+  '1000038': {
+    name: 'DOTA',
+    assetType: 'External',
+    existentialDeposit: '1',
+    symbol: 'DOTA',
+    decimals: '4'
   }
 };
 

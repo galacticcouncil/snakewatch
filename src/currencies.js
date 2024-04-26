@@ -88,6 +88,13 @@ let currencies = {
     existentialDeposit: '1',
     symbol: 'WUD',
     decimals: '10'
+  },
+  '1000091': {
+    name: 'BDNT',
+    assetType: 'External',
+    existentialDeposit: '1',
+    symbol: 'BDNT',
+    decimals: '10'
   }
 };
 

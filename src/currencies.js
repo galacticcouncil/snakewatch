@@ -3,101 +3,9 @@ import dijkstrajs from "dijkstrajs";
 import {usdCurrencyId, whaleAmount} from "./config.js";
 import {fromAccount} from "./utils/evm.js";
 import {emojify} from "./utils/emojify.js";
+import {metadata} from "./utils/assethub.js";
 
-let currencies = {
-  '1000019': {
-    name: 'DED',
-    assetType: 'External',
-    existentialDeposit: '1',
-    symbol: 'DED',
-    decimals: '10'
-  },
-  '1000021': {
-    name: 'PINK',
-    assetType: 'External',
-    existentialDeposit: '1',
-    symbol: 'PINK',
-    decimals: '10'
-  },
-  '1000023': {
-    name: 'IceCreamToken',
-    assetType: 'External',
-    existentialDeposit: '1',
-    symbol: 'ICE',
-    decimals: '20'
-  },
-  '1000026': {
-    name: 'Efinity Token',
-    assetType: 'External',
-    existentialDeposit: '1',
-    symbol: 'EFI',
-    decimals: '18'
-  },
-  '1000027': {
-    name: 'web3.online',
-    assetType: 'External',
-    existentialDeposit: '1',
-    symbol: 'web3',
-    decimals: '18'
-  },
-  '1000028': {
-    name: 'Polkadot Index',
-    assetType: 'External',
-    existentialDeposit: '1',
-    symbol: 'PINT',
-    decimals: '12'
-  },
-  '1000029': {
-    name: 'Danger Coin',
-    assetType: 'External',
-    existentialDeposit: '1',
-    symbol: 'DANGER',
-    decimals: '8'
-  },
-  '1000034': {
-    name: 'STINK',
-    assetType: 'External',
-    existentialDeposit: '1',
-    symbol: 'STINK',
-    decimals: '10'
-  },
-  '1000035': {
-    name: 'BEER',
-    assetType: 'External',
-    existentialDeposit: '1',
-    symbol: 'BEER',
-    decimals: '6'
-  },
-  '1000036': {
-    name: 'BEEFY',
-    assetType: 'External',
-    existentialDeposit: '1',
-    symbol: 'BEEFY',
-    decimals: '2'
-  },
-  '1000038': {
-    name: 'DOTA',
-    assetType: 'External',
-    existentialDeposit: '1',
-    symbol: 'DOTA',
-    decimals: '4'
-  },
-  '1000085': {
-    name: 'WUD',
-    assetType: 'External',
-    existentialDeposit: '1',
-    symbol: 'WUD',
-    decimals: '10'
-  },
-  '1000091': {
-    name: 'BDNT',
-    assetType: 'External',
-    existentialDeposit: '1',
-    symbol: 'BDNT',
-    decimals: '10'
-  }
-};
-
+let currencies = {};
 const prices = {};
 
 export const isWhale = amount => amount >= whaleAmount;
@@ -120,6 +28,14 @@ async function loadCurrency(id) {
       const bond = await api().query.bonds.bonds(id);
       const [parent, maturity] = bond.toHuman();
       currency = {...currency, parent, maturity};
+    }
+    if (currency.assetType === 'External') {
+      const location = (await api().query.assetRegistry.assetLocations(id)).toJSON();
+      const ahId = location?.interior?.x3[2]?.generalIndex;
+      if (ahId) {
+        const meta = await metadata(ahId);
+        currency = {...currency, ...meta?.toHuman()};
+      }
     }
     currencies = {...currencies, [id]: currency};
   }

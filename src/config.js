@@ -2,6 +2,7 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 export const rpc = process.env.RPC_URL || 'wss://localhost:9988';
+export const ahRpc = process.env.AH_RPC_URL || 'wss://polkadot-asset-hub-rpc.polkadot.io';
 export const token = process.env.DISCORD_TOKEN;
 export const channel = process.env.DISCORD_CHANNEL;
 export const sha = process.env.COMMIT_SHA || 'dev';

@@ -7,7 +7,7 @@ export default function routerHandler(events) {
 }
 
 export function notInRouter({siblings}) {
-  return siblings.find(({method}) => ['Executed'].includes(method)) === undefined;
+  return siblings.find(({section, method}) => `${section}.${method}` === 'router.Executed') === undefined;
 }
 
 function routeExecutedHandler({event, siblings}) {

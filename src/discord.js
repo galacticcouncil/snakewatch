@@ -32,7 +32,8 @@ export function broadcast(message) {
     if (channel) {
       channel.send(message);
     } else {
-      throw new Error(`discord channel ${_channel} not connected`);
+      console.error(new Error(`discord channel ${_channel} not connected`));
+      process.exit(421);
     }
   }
 }

@@ -27,4 +27,5 @@ const degens = {
   '7L1jebaeGNykbey5gZhZCD4PLVLtjPm5RKpKXRYV4NXsF6TM': '🦍',
   '7KQx4f7yU3hqZHfvDVnSfe6mpgAT8Pxyr67LXHV6nsbZo3Tm': '<:polkadot:1064520790978080818>',
   '7LcF8b5GSvajXkSChhoMFcGDxF9Yn9unRDceZj1Q6NYox8HY': '<:polkadot:1064520790978080818>',
+  '7KCp4eenFS4CowF9SpQE5BBCj5MtoBA3K811tNyRmhLfH1aV': '<:polkadot:1064520790978080818>',
 };

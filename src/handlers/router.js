@@ -12,7 +12,7 @@ export function notInRouter({siblings}) {
 
 function routeExecutedHandler({event, siblings}) {
   const {who} = siblings.find(({method}) => method === 'TransactionFeePaid')?.data
-    || siblings.find(({method}) => method === 'Withdrawn')?.data;
+    || siblings[0]?.data;
   let {assetIn, assetOut, amountIn, amountOut} = event.data;
   if (isBuy({event, siblings})) {
 

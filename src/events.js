@@ -1,4 +1,5 @@
 import {api} from './api.js';
+import ethers from "ethers";
 
 export class Events {
   listeners = [];
@@ -15,6 +16,20 @@ export class Events {
 
   onSection(section, addedCallback) {
     this.listeners.push({section, addedCallback});
+    return this;
+  }
+
+  onLog(name, abi, callback) {
+    const iface = new ethers.utils.Interface(abi);
+    const filterPredicate = ({event: {data}}) => {
+      try {
+        return iface.parseLog(data.log.toHuman()).name === name;
+      } catch (e) {
+        return false;
+      }
+    }
+    const addedCallback = payload => callback({...payload, log: iface.parseLog(payload.event.data.log.toHuman())});
+    this.listeners.push({section: 'evm', method: 'Log', filterPredicate, addedCallback});
     return this;
   }
 

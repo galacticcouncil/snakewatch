@@ -10,6 +10,7 @@ import otc from "./handlers/otc.js";
 import dca from "./handlers/dca.js";
 import staking from "./handlers/staking.js";
 import referrals from "./handlers/referrals.js";
+import borrowing from "./handlers/borrowing.js";
 import {initDiscord} from "./discord.js";
 import {rpc, sha, token, channel} from "./config.js";
 import {currenciesHandler} from "./currencies.js";
@@ -35,6 +36,7 @@ async function main() {
   events.addHandler(transfers);
   events.addHandler(staking);
   events.addHandler(referrals);
+  events.addHandler(borrowing);
 
   if (process.env.NODE_ENV === 'test') {
     console.log('testing mode: pushing testing blocks');

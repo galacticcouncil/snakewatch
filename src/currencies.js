@@ -106,4 +106,4 @@ export const formatUsdValue = value => {
   const symbol = currencies[usdCurrencyId].symbol || currencies[usdCurrencyId].name || 'USD';
   return ` *~ ${new Intl.NumberFormat('en-US', {maximumSignificantDigits: amount < 1 ? 1 : 4, maximumFractionDigits: 2}).format(amount).replace(/,/g, " ")} ${symbol}*`;
 };
-export const formatAsset = asset => `**${formatAmount(asset)}**${formatUsdValue(usdValue(asset))}`;
+export const formatAsset = asset => `**${formatAmount(asset)}**${asset.currencyId.toString() === usdCurrencyId ? formatUsdValue(usdValue(asset)) : ''}`;

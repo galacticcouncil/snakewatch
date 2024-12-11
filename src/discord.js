@@ -1,5 +1,6 @@
 import {Client, GatewayIntentBits} from 'discord.js';
 import markdownToAnsi from 'markdown-to-ansi'
+import memoize from "memoizee";
 
 let _client = null;
 let _channel = null;
@@ -37,3 +38,5 @@ export function broadcast(message) {
     }
   }
 }
+
+export const broadcastOnce = memoize(broadcast);

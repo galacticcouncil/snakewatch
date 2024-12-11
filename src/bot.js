@@ -14,6 +14,7 @@ import borrowing from "./handlers/borrowing.js";
 import {initDiscord} from "./discord.js";
 import {rpc, sha, token, channel} from "./config.js";
 import {currenciesHandler} from "./currencies.js";
+import {endpoints} from "./endpoints.js";
 
 async function main() {
   console.log('🐍⌚');
@@ -23,6 +24,8 @@ async function main() {
   const [chain, version] = await Promise.all([system.chain(), system.version()]);
   console.log(`connected to ${rpc} (${chain} ${version})`);
   await initDiscord(token, channel);
+
+  await endpoints.start();
 
   const events = new Events();
   events.addHandler(currenciesHandler);

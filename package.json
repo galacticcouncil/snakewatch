@@ -32,8 +32,10 @@
     "discord.js": "^14.0.3",
     "dotenv": "^16.0.1",
     "ethers": "^5.7.2",
+    "express": "^4.21.2",
     "markdown-to-ansi": "^1.0.0",
-    "memoizee": "^0.4.17"
+    "memoizee": "^0.4.17",
+    "p-queue": "^8.0.1"
   },
   "devDependencies": {
     "jest": "^28.1.3"

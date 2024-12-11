@@ -1,16 +1,22 @@
 import {formatAccount, formatAsset} from "../currencies.js";
 import {broadcast} from "../discord.js";
 import poolAbi from "../resources/aave-pool.abi.js";
+import oracleAbi from "../resources/dia-oracle.abi.js";
 import ERC20Mapping from "../utils/erc20mapping.js";
 import {toAccount} from "../utils/evm.js";
+import Borrowers from "../utils/borrowers.js";
+
+const borrowers = new Borrowers();
 
 export default function borrowingHandler(events) {
+  borrowers.init();
   events
-    .onLog('Supply', poolAbi, supply)
-    .onLog('Withdraw', poolAbi, withdraw)
-    .onLog('Borrow', poolAbi, borrow)
-    .onLog('Repay', poolAbi, repay)
-    .onLog('LiquidationCall', poolAbi, liquidationCall)
+    .onLog('Supply', poolAbi, borrowers.handler(supply))
+    .onLog('Withdraw', poolAbi, borrowers.handler(withdraw))
+    .onLog('Borrow', poolAbi, borrowers.handler(borrow))
+    .onLog('Repay', poolAbi, borrowers.handler(repay))
+    .onLog('LiquidationCall', poolAbi, borrowers.handler(liquidationCall))
+    .onLog('OracleUpdate', oracleAbi, oracleUpdate);
 }
 
 async function supply({log: {args: {reserve, amount, onBehalfOf}}}) {
@@ -46,4 +52,8 @@ async function liquidationCall({log: {args}}) {
   const [liquidator, user] = await Promise.all([toAccount(args.liquidator), toAccount(args.user)]);
   const message = `${formatAccount(liquidator)} liquidated ${formatAsset(collateral)} of ${formatAccount(user)}`;
   broadcast(message);
+}
+
+function oracleUpdate({blockNumber}) {
+  borrowers.updateAll(blockNumber);
 }

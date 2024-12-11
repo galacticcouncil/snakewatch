@@ -17,7 +17,7 @@ export function currenciesHandler(events) {
     .on('otc', 'Placed', ({event: {data: {assetIn}}}) => assetIn && loadCurrency(assetIn))
 }
 
-async function loadCurrency(id) {
+export async function loadCurrency(id) {
   if (!currencies[id]) {
     let currency = (await api().query.assetRegistry.assets(id)).toHuman();
     if (api().query.assetRegistry.assetMetadataMap) {
@@ -106,4 +106,5 @@ export const formatUsdValue = value => {
   const symbol = currencies[usdCurrencyId].symbol || currencies[usdCurrencyId].name || 'USD';
   return ` *~ ${new Intl.NumberFormat('en-US', {maximumSignificantDigits: amount < 1 ? 1 : 4, maximumFractionDigits: 2}).format(amount).replace(/,/g, " ")} ${symbol}*`;
 };
+export const formatUsdNumber = amount => new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD'}).format(amount);
 export const formatAsset = asset => `**${formatAmount(asset)}**${asset.currencyId.toString() === usdCurrencyId ? formatUsdValue(usdValue(asset)) : ''}`;

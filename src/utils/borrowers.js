@@ -30,15 +30,14 @@ export default class Borrowers {
   }
 
   handler(inner) {
-    return async event => {
-      await inner(event);
+    return async payload => {
+      await inner(payload);
       try {
-        const {log: {args: {user}, address}, blocknumber} = event;
-        await this.update(address, user);
-        this.lastUpdate = blocknumber;
+        const {log: {args: {user}}, event: {data: {log: {address}}}, blockNumber} = payload;
+        await this.update(address.toHex(), user);
+        this.lastUpdate = blockNumber;
       } catch (e) {
-        console.error('failed to update borrower health', event, e);
-        console.log(this.health);
+        console.error('failed to update borrower health', payload, e);
       }
     }
   }
@@ -57,6 +56,7 @@ export default class Borrowers {
       const start = performance.now();
       await Promise.all(addresses.map((address, i) => this.update(contracts[i], normalizeAddress(address))));
       console.log(addresses.length + ' borrowers initialized from grafana in ' + (performance.now() - start).toFixed(2) + 'ms');
+      console.log(Object.keys(this.health))
     }
   }
 

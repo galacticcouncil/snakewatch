@@ -1,5 +1,6 @@
 import {api} from './api.js';
 import ethers from "ethers";
+import {delay} from "./config.js";
 
 export class Events {
   listeners = [];
@@ -39,7 +40,7 @@ export class Events {
 
   startWatching() {
     this.killWatcher = api().query.system.number(head => {
-      const block = head.toNumber() - 1;
+      const block = head.toNumber() - delay;
       this.emitFromBlock(block);
     });
   }

@@ -1,4 +1,4 @@
-import {grafanaUrl, grafanaDatasource, liquidationAlert} from "../config.js";
+import {grafanaDatasource, grafanaUrl, liquidationAlert} from "../config.js";
 import Grafana from "./grafana.js";
 import {normalizeAddress, provider, toAccount} from "./evm.js";
 import poolAbi from "../resources/aave-pool.abi.js";
@@ -64,17 +64,20 @@ export default class Borrowers {
     if (!this.health[contract]) {
       this.health[contract] = new Map();
     }
-    // current health factor
     const healthFactor = this.health[contract].get(address)?.healthFactor;
     const priority = healthFactor ? 1 / healthFactor : 0;
     return this.queue.add(async () => {
-      const data = await getUserAccountData(contract, address);
-      if (data.healthFactor < liquidationAlert) {
-        const health = `:${data.healthFactor < 1 ? 'broken_heart' : 'heart'}:**${Math.floor(data.healthFactor * 100) / 100}**`;
-        broadcastOnce(`:rotating_light: liquidation imminent for ${formatAccount(data.account)} position ${health} with **${formatUsdNumber(data.totalCollateralBase)}** collateral at risk `);
+      try {
+        const data = await getUserAccountData(contract, address);
+        if (data.healthFactor < liquidationAlert) {
+          const health = `:${data.healthFactor < 1 ? 'broken_heart' : 'heart'}:**${Math.floor(data.healthFactor * 100) / 100}**`;
+          broadcastOnce(`:rotating_light: liquidation imminent for ${formatAccount(data.account)} position ${health} with **${formatUsdNumber(data.totalCollateralBase)}** collateral at risk `);
+        }
+        this.health[contract].set(address, data);
+        this.byHealth.clear();
+      } catch (e) {
+        console.error('failed to update health of', address, 'in', contract, e);
       }
-      this.health[contract].set(address, data);
-      this.byHealth.clear();
     }, {priority});
   }
 
@@ -93,30 +96,22 @@ export default class Borrowers {
 }
 
 async function getUserAccountData(pool, address) {
-  try {
-    if (!ethers.utils.isAddress(address)) {
-      throw new Error('Invalid user address: ' + address);
-    }
-
-    const poolContract = new ethers.Contract(pool, poolAbi, provider);
-
-    const [data, account] = await Promise.all([poolContract.getUserAccountData(address), toAccount(address),]);
-
-    // Note: Values are in Wei (RAY units - 27 decimals), so we convert them to more readable format
-    const formattedData = {
-      totalCollateralBase: Number(ethers.utils.formatUnits(data.totalCollateralBase, 8)),
-      totalDebtBase: Number(ethers.utils.formatUnits(data.totalDebtBase, 8)),
-      availableBorrowsBase: Number(ethers.utils.formatUnits(data.availableBorrowsBase, 8)),
-      currentLiquidationThreshold: data.currentLiquidationThreshold.toString() / 100, // Convert to percentage
-      ltv: data.ltv.toString() / 100, // Convert to percentage
-      healthFactor: Number(ethers.utils.formatUnits(data.healthFactor, 18)),
-      updated: Date.now(),
-      account,
-      pool,
-    };
-
-    return formattedData;
-  } catch (error) {
-    console.error(`Failed to get user account data: ${error.message}`);
+  if (!ethers.utils.isAddress(address)) {
+    throw new Error('Invalid user address: ' + address);
   }
+
+  const poolContract = new ethers.Contract(pool, poolAbi, provider);
+  const [data, account] = await Promise.all([poolContract.getUserAccountData(address), toAccount(address)]);
+
+  return {
+    totalCollateralBase: Number(ethers.utils.formatUnits(data.totalCollateralBase, 8)),
+    totalDebtBase: Number(ethers.utils.formatUnits(data.totalDebtBase, 8)),
+    availableBorrowsBase: Number(ethers.utils.formatUnits(data.availableBorrowsBase, 8)),
+    currentLiquidationThreshold: data.currentLiquidationThreshold.toString() / 100, // Convert to percentage
+    ltv: data.ltv.toString() / 100, // Convert to percentage
+    healthFactor: Number(ethers.utils.formatUnits(data.healthFactor, 18)),
+    updated: Date.now(),
+    account,
+    pool,
+  };
 }

@@ -19,11 +19,15 @@ import {endpoints} from "./endpoints.js";
 async function main() {
   console.log('🐍⌚');
   console.log('snakewatch', sha);
+
   await initApi(rpc);
-  const {rpc: {system}} = api();
-  const [chain, version] = await Promise.all([system.chain(), system.version()]);
-  console.log(`connected to ${rpc} (${chain} ${version})`);
-  await initDiscord(token, channel);
+
+  if (!token || !channel) {
+    console.log('missing discord token or channel');
+    console.log('discord disabled');
+  } else {
+    await initDiscord(token, channel);
+  }
 
   await endpoints.start();
 

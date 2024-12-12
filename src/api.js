@@ -9,6 +9,9 @@ export async function initApi(rpc) {
   provider = new WsProvider(rpc);
   _api = await ApiPromise.create({provider});
   initialized = true;
+  const version = await _api.query.system.lastRuntimeUpgrade();
+  const {specVersion, specName} = version.toJSON();
+  console.log(`connected to ${specName}/${specVersion} on ${rpc}`);
 }
 
 export async function disconnect() {

@@ -7,6 +7,9 @@ async function api() {
   if (!_api && ahRpc) {
     const provider = new WsProvider(ahRpc);
     _api = await ApiPromise.create({provider});
+    const version = await _api.query.system.lastRuntimeUpgrade();
+    const {specVersion, specName} = version.toJSON();
+    console.log(`connected to ${specName}/${specVersion} on ${ahRpc}`);
   }
   return _api;
 }

@@ -70,7 +70,7 @@ export default class Borrowers {
       try {
         const data = await getUserAccountData(contract, address);
         if (data.healthFactor < liquidationAlert) {
-          const health = `:${data.healthFactor < 1 ? 'broken_heart' : 'heart'}:**${Math.floor(data.healthFactor * 100) / 100}**`;
+          const health = `:${data.healthFactor < 1 ? 'broken_heart' : 'heart'}:**${(Math.floor(data.healthFactor * 100) / 100).toFixed(2)}**`;
           broadcastOnce(`:rotating_light: liquidation imminent for ${formatAccount(data.account)} position ${health} with **${formatUsdNumber(data.totalCollateralBase)}** collateral at risk `);
         }
         this.health[contract].set(address, data);

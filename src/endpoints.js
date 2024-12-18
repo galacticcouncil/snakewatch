@@ -16,7 +16,17 @@ class EndpointRegistry {
     });
   }
 
-  registerEndpoint(namespace, routes, middleware = []) {
+  /**
+   * Register a new endpoint
+   * @param {string} namespace - The namespace for this endpoint
+   * @param {Object} routes - Object containing route definitions
+   * @param {Object} options - Registration options
+   * @param {boolean} options.prefix - Whether to prefix with /api/ (default: true)
+   * @param {Array} options.middleware - Middleware to apply to the routes
+   */
+  registerEndpoint(namespace, routes, options = {}) {
+    const { prefix = true, middleware = [] } = options;
+
     if (this.registeredEndpoints.has(namespace)) {
       throw new Error(`Endpoint namespace '${namespace}' is already registered`);
     }
@@ -37,8 +47,9 @@ class EndpointRegistry {
       });
     });
 
-    this.app.use(`/api/${namespace}`, router);
-    this.registeredEndpoints.set(namespace, { routes, middleware });
+    const path = prefix ? `/api/${namespace}` : `/${namespace}`;
+    this.app.use(path, router);
+    this.registeredEndpoints.set(namespace, { routes, options });
   }
 
   start() {

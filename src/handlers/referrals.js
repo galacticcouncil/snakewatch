@@ -11,27 +11,37 @@ const referralPot = '7L53bUTCCAvmCxhe15maHwJZbjQYH89LkXuyTnTi1J58xyFC';
 
 export const notByReferralPot = ({event: {data: {who}}}) => who.toString() !== referralPot;
 
-const window = 150;
-let accrued = 0;
+// Define different windows
+const windows = [150, 7200, 15000];
+const accruedAmounts = {};
 let since = null;
 
 async function transferHandler({event: {data: {amount}}, blockNumber})  {
-  if (since === null) {
-    since = blockNumber;
-  }
-  accrued += Number(amount);
-  if (blockNumber - since > window) {
-    report();
-    accrued = 0;
-    since = blockNumber;
-  }
+ windows.forEach(window => {
+    if (accruedAmounts[window] === undefined) {
+      accruedAmounts[window] = {
+        accrued: 0,
+        since: blockNumber,
+      };
+    }
+
+    accruedAmounts[window].accrued += Number(amount);
+
+    if (blockNumber - accruedAmounts[window].since > window) {
+      report(window);
+      accruedAmounts[window].accrued = 0;
+      accruedAmounts[window].since = blockNumber;
+    }
+  });
 }
 
-function report() {
+function report(window) {
+  const { accrued, since } = accruedAmounts[window];
+
   if (accrued > 0) {
-    const amount = {amount: accrued, currencyId: 0};
+    const amount = { amount: accrued, currencyId: 0 };
     const value = usdValue(amount);
-    const message = `💸 **${formatAmount(amount)}**${formatUsdValue(value)} bought for rewards`;
+    const message = `💸 **${formatAmount(amount)}**${formatUsdValue(value)} bought for rewards (Window: ${window} blocks)`;
     broadcast(message);
   }
 }
@@ -40,7 +50,7 @@ function report() {
   'SIGBUS', 'SIGFPE', 'SIGUSR1', 'SIGSEGV', 'SIGUSR2', 'SIGTERM'
 ].forEach(sig =>
   process.on(sig, () => {
-    report();
+    windows.forEach(window => report(window));
     setTimeout(() => process.exit(0), 500);
   }));
 

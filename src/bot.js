@@ -68,7 +68,7 @@ async function main() {
     }
   }
 
-  const pools = await sdk().getPools();
+  const pools = await sdk().router.getPools();
   console.log(pools);
 
   console.log('watching for new blocks');

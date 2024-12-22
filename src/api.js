@@ -1,11 +1,11 @@
 import {ApiPromise, WsProvider} from "@polkadot/api";
 import {PoolService, TradeRouter} from "@galacticcouncil/sdk";
 
-
 let initialized = false;
-let synced = false;
+let ready = false;
 let _api;
 let _poolService;
+let _router;
 let provider;
 
 export async function initApi(rpc) {
@@ -21,14 +21,19 @@ export async function initApi(rpc) {
 export async function initSdk(api) {
   _poolService = new PoolService(api);
   await _poolService.syncRegistry();
-  synced = true;
+  _router = new TradeRouter(_poolService);
+  ready = true;
 }
 
 export async function disconnect() {
   await _api.disconnect();
+  await _poolService.disconnect();
   provider = null;
   _api = null;
+  _poolService = null;
+  _router = null;
   initialized = false;
+  ready = false;
 }
 
 export function api() {
@@ -39,8 +44,11 @@ export function api() {
 }
 
 export function sdk() {
-  if (!synced || !_poolService) {
-    throw new Error('router not synced');
+  if (!ready || !_router) {
+    throw new Error('router not ready');
   }
-  return new TradeRouter(_poolService);
+  return {
+    router: _router,
+    poolService: _poolService
+  };
 }

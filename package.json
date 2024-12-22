@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "src/bot.js",
+  "type": "module",
   "scripts": {
     "test": "node --experimental-vm-modules ./node_modules/.bin/jest --detectOpenHandles",
     "start": "node src/bot.js",
@@ -21,7 +22,6 @@
     "url": "https://github.com/galacticcouncil/snakewatch/issues"
   },
   "homepage": "https://github.com/galacticcouncil/snakewatch#readme",
-  "type": "module",
   "jest": {
     "transform": {}
   },

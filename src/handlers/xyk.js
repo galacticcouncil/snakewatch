@@ -31,7 +31,7 @@ export async function swapHandler({who, assetIn, assetOut, amountIn, amountOut},
   const sold = {currencyId: assetIn, amount: amountIn};
   const bought = {currencyId: assetOut, amount: amountOut};
   recordPrice(sold, bought);
-  const value = usdValue(bought);
+  const value = await usdValue(bought);
   let message = `${formatAccount(who, isWhale(value))} ${action} **${formatAmount(sold)}** for **${formatAmount(bought)}**`;
   if (![assetIn, assetOut].map(id => id.toString()).includes(usdCurrencyId)) {
     message += formatUsdValue(value);
@@ -43,7 +43,7 @@ async function liquidityAddedHandler({event}) {
   const {who, assetA, assetB, amountA, amountB} = event.data;
   const a = {amount: amountA, currencyId: assetA};
   const b = {amount: amountB, currencyId: assetB};
-  const [va, vb] = [a, b].map(usdValue);
+  const [va, vb] = await Promise.all([a, b].map(usdValue));
   const value = va && vb ? va + vb : null;
   const message = `💦 liquidity added as **${formatAmount(a)}** + **${formatAmount(b)}**${formatUsdValue(value)} by ${formatAccount(who, isWhale(value))}`;
   broadcast(message);

@@ -19,7 +19,7 @@ export default function transfersHandler(events) {
 
 async function transferredHandler({event}) {
   const {from, to} = event.data;
-  const value = usdValue(event.data);
+  const value = await usdValue(event.data);
   if (isWhale(value)) {
     const message = `${formatAccount(from, true)} transferred **${formatAmount(event.data)}**${formatUsdValue(value)} to ${formatAccount(to, true)}`;
     broadcast(message);

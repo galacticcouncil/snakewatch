@@ -1,4 +1,4 @@
-import {initApi, api, initSdk, sdk} from './api.js';
+import {initApi, api, sdk} from './api.js';
 import {Events} from "./events.js";
 import xyk from "./handlers/xyk.js";
 import lbp from "./handlers/lbp.js";
@@ -21,7 +21,6 @@ async function main() {
   console.log('snakewatch', sha);
 
   await initApi(rpc);
-  await initSdk(api());
 
   if (!token || !channel) {
     console.log('missing discord token or channel');
@@ -67,9 +66,6 @@ async function main() {
       await events.emitFromBlock(i);
     }
   }
-
-  const pools = await sdk().getPools();
-  console.log(pools);
 
   console.log('watching for new blocks');
   events.startWatching();

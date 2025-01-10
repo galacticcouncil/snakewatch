@@ -29,7 +29,10 @@ export class Events {
         return false;
       }
     }
-    const addedCallback = payload => callback({...payload, log: iface.parseLog(payload.event.data.log.toHuman())});
+    const addedCallback = payload => {
+      payload.log = iface.parseLog(payload.event.data.log.toHuman());
+      return callback(payload);
+    };
     this.listeners.push({section: 'evm', method: 'Log', filterPredicate, addedCallback});
     return this;
   }
@@ -90,13 +93,13 @@ export const loadEvents = async blockNumber => api().rpc.chain.getBlockHash(bloc
   .then(hash => api().query.system.events.at(hash))
   .then(events => processEvents(events, blockNumber));
 
-export const processEvents = (events, blockNumber) => events.map(event => ({
-  blockNumber,
-  siblings: events
+export const processEvents = (events, blockNumber) => events.map(event => {
+  event.blockNumber = blockNumber;
+  event.siblings = events
     .filter(({phase}) => (phase.isInitialization && event.phase.isInitialization)
       || phase.isApplyExtrinsic
       && event.phase.isApplyExtrinsic
       && phase.asApplyExtrinsic.eq(event.phase.asApplyExtrinsic))
-    .map(({event}) => event),
-  ...event
-}));
+    .map(({event}) => event);
+  return event;
+});

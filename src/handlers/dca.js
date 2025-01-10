@@ -53,20 +53,22 @@ function terminatedHandler({event}) {
 function broadcastBuffer(scheduleId) {
   const executions = buffer.filter(({id}) => id === scheduleId);
   buffer = buffer.filter(({id}) => id !== scheduleId);
-  const {who} = executions[0];
-  const {assetIn, assetOut} = executions[0].trade.data;
-  const amountIn = executions.reduce((sum, {trade}) => sum.add(trade.data.amountIn), new BN(0));
-  const amountOut = executions.reduce((sum, {trade}) => sum.add(trade.data.amountOut), new BN(0));
-  if (executions.length === 1) {
-    return swapHandler({who, assetIn, assetOut, amountIn, amountOut});
-  } else {
-    return swapHandler({
-      who,
-      assetIn,
-      assetOut,
-      amountIn,
-      amountOut
-    }, `split over ${executions.length} swaps`);
+  if (executions[0].trade) {
+    const {who} = executions[0];
+    const {assetIn, assetOut} = executions[0].trade.data;
+    const amountIn = executions.reduce((sum, {trade}) => sum.add(trade.data.amountIn), new BN(0));
+    const amountOut = executions.reduce((sum, {trade}) => sum.add(trade.data.amountOut), new BN(0));
+    if (executions.length === 1) {
+      return swapHandler({who, assetIn, assetOut, amountIn, amountOut});
+    } else {
+      return swapHandler({
+        who,
+        assetIn,
+        assetOut,
+        amountIn,
+        amountOut
+      }, `split over ${executions.length} swaps`);
+    }
   }
 }
 

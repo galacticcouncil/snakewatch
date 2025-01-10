@@ -26,7 +26,7 @@ export async function buyHandler({event}) {
 async function liquidityAddedHandler({event}) {
   const {who, assetId: currencyId, amount} = event.data;
   const added = {currencyId, amount};
-  const value = currencyId.toString() !== usdCurrencyId ? usdValue(added) : null;
+  const value = currencyId.toString() !== usdCurrencyId ? await usdValue(added) : null;
   const message = `💦 omnipool hydrated with **${formatAmount(added)}**${formatUsdValue(value)} by ${formatAccount(who, isWhale(value))}`;
   broadcast(message);
 }
@@ -43,7 +43,7 @@ async function liquidityRemovedHandler({event, siblings}) {
     lrna = ' + ' + formatAmount(asset);
     asset = transfers[1].data;
   }
-  const value = currencyId.toString() !== usdCurrencyId ? usdValue(asset) : null;
+  const value = currencyId.toString() !== usdCurrencyId ? await usdValue(asset) : null;
   const message = `🚰 omnipool dehydrated of **${formatAmount(asset)}**${formatUsdValue(value)}${lrna} by ${formatAccount(who, isWhale(value))}`;
   broadcast(message);
 }

@@ -1,4 +1,4 @@
-import {initApi, api} from './api.js';
+import {initApi, api, sdk} from './api.js';
 import {Events} from "./events.js";
 import xyk from "./handlers/xyk.js";
 import lbp from "./handlers/lbp.js";

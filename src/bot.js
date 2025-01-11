@@ -7,7 +7,7 @@ import stableswap from "./handlers/stableswap.js";
 import router from "./handlers/router.js";
 import transfers from "./handlers/transfers.js";
 import otc from "./handlers/otc.js";
-import dca from "./handlers/dca.js";
+import dca, {terminator} from "./handlers/dca.js";
 import staking from "./handlers/staking.js";
 import referrals from "./handlers/referrals.js";
 import borrowing from "./handlers/borrowing.js";
@@ -15,6 +15,7 @@ import {initDiscord} from "./discord.js";
 import {rpc, sha, token, channel} from "./config.js";
 import {currenciesHandler} from "./currencies.js";
 import {endpoints} from "./endpoints.js";
+import process from "node:process";
 
 async function main() {
   console.log('🐍⌚');
@@ -73,9 +74,17 @@ async function main() {
 
 main().catch(err => {
   console.error(err);
-  process.exit(1);
+  exit(1);
 });
 
+[
+  'SIGHUP', 'SIGINT', 'SIGQUIT', 'SIGILL', 'SIGTRAP', 'SIGABRT',
+  'SIGBUS', 'SIGFPE', 'SIGUSR1', 'SIGSEGV', 'SIGUSR2', 'SIGTERM'
+].forEach((signal, index) => process.on(signal, () => exit(128 + index + 1)));
 
+function exit(code = 0) {
+  terminator();
+  setTimeout(() => process.exit(code), 500);
+}
 
 

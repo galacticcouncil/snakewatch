@@ -72,16 +72,8 @@ function broadcastBuffer(scheduleId) {
   }
 }
 
-function terminator() {
+export function terminator() {
   const ids = new Set(buffer.map(({id}) => id));
   [...ids].map(broadcastBuffer);
 }
-
-['SIGHUP', 'SIGINT', 'SIGQUIT', 'SIGILL', 'SIGTRAP', 'SIGABRT',
-  'SIGBUS', 'SIGFPE', 'SIGUSR1', 'SIGSEGV', 'SIGUSR2', 'SIGTERM'
-].forEach(sig =>
-  process.on(sig, () => {
-    terminator();
-    setTimeout(() => process.exit(0), 500);
-  }));
 

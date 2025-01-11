@@ -1,6 +1,6 @@
 import {api} from './api.js';
 import ethers from "ethers";
-import {delay} from "./config.js";
+import {delay, timeout} from "./config.js";
 
 export class Events {
   listeners = [];
@@ -42,16 +42,21 @@ export class Events {
   }
 
   startWatching() {
-    this.killWatcher = api().query.system.number(head => {
+    let watchdogTimer;
+
+    const resetWatchdog = () => {
+      clearTimeout(watchdogTimer);
+
+      watchdogTimer = setTimeout(() => {
+        throw new Error(`no block received for ${timeout} seconds`);
+      }, timeout * 1000);
+    };
+
+    api().query.system.number(head => {
+      resetWatchdog();
       const block = head.toNumber() - delay;
       this.emitFromBlock(block);
     });
-  }
-
-  stopWatching() {
-    if (this.killWatcher) {
-      this.killWatcher();
-    }
   }
 
   async emit(events) {

@@ -33,6 +33,10 @@ async function main() {
   await endpoints.start();
 
   const events = new Events();
+
+  console.log('watching for new blocks');
+  events.startWatching();
+
   events.addHandler(currenciesHandler);
   events.addHandler(xyk);
   events.addHandler(lbp);
@@ -67,9 +71,6 @@ async function main() {
       await events.emitFromBlock(i);
     }
   }
-
-  console.log('watching for new blocks');
-  events.startWatching();
 }
 
 main().catch(err => {

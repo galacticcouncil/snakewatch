@@ -21,16 +21,16 @@ async function transferHandler({event: {data: {amount}}, blockNumber})  {
   }
   accrued += Number(amount);
   if (blockNumber - since > window) {
-    report();
+    await report();
     accrued = 0;
     since = blockNumber;
   }
 }
 
-function report() {
+async function report() {
   if (accrued > 0) {
     const amount = {amount: accrued, currencyId: 0};
-    const value = usdValue(amount);
+    const value = await usdValue(amount);
     const message = `💸 **${formatAmount(amount)}**${formatUsdValue(value)} bought for rewards`;
     broadcast(message);
   }
@@ -39,8 +39,8 @@ function report() {
 ['SIGHUP', 'SIGINT', 'SIGQUIT', 'SIGILL', 'SIGTRAP', 'SIGABRT',
   'SIGBUS', 'SIGFPE', 'SIGUSR1', 'SIGSEGV', 'SIGUSR2', 'SIGTERM'
 ].forEach(sig =>
-  process.on(sig, () => {
-    report();
+  process.on(sig, async () => {
+    await report();
     setTimeout(() => process.exit(0), 500);
   }));
 

@@ -1,4 +1,4 @@
-import {api} from "./api.js";
+import {api, sdk} from "./api.js";
 import dijkstrajs from "dijkstrajs";
 import {usdCurrencyId, whaleAmount} from "./config.js";
 import {fromAccount} from "./utils/evm.js";
@@ -17,7 +17,7 @@ export function currenciesHandler(events) {
     .on('otc', 'Placed', ({event: {data: {assetIn}}}) => assetIn && loadCurrency(assetIn))
 }
 
-async function loadCurrency(id) {
+export async function loadCurrency(id) {
   if (!currencies[id]) {
     let currency = (await api().query.assetRegistry.assets(id)).toHuman();
     if (api().query.assetRegistry.assetMetadataMap) {
@@ -50,9 +50,20 @@ export const recordPrice = (sold, bought) => {
   prices[a][b] = pair[0].amount / pair[1].amount;
 }
 
-export function usdValue({currencyId, amount}) {
+export function recordedUsdValue({currencyId, amount}) {
   const price = getPrice(currencyId, usdCurrencyId);
   return price ? amount / price : null;
+}
+
+export async function usdValue({currencyId, amount}) {
+  if (currencyId.toString() === usdCurrencyId) return null;
+  try {
+    const spot = await sdk().getBestSpotPrice(currencyId.toString(), usdCurrencyId);
+    return (amount / 10 ** decimals(currencyId)) * spot.amount;
+  } catch (e) {
+    console.log('failed to get USD price from router:', e.message);
+    return recordedUsdValue({currencyId, amount});
+  }
 }
 
 export function getPrice(asset, target) {
@@ -106,3 +117,5 @@ export const formatUsdValue = value => {
   const symbol = currencies[usdCurrencyId].symbol || currencies[usdCurrencyId].name || 'USD';
   return ` *~ ${new Intl.NumberFormat('en-US', {maximumSignificantDigits: amount < 1 ? 1 : 4, maximumFractionDigits: 2}).format(amount).replace(/,/g, " ")} ${symbol}*`;
 };
+export const formatUsdNumber = amount => new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD'}).format(amount);
+export const formatAsset = async asset => `**${formatAmount(asset)}**${asset.currencyId.toString() === usdCurrencyId ? formatUsdValue(await usdValue(asset)) : ''}`;

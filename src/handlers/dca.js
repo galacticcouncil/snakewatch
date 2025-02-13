@@ -53,33 +53,27 @@ function terminatedHandler({event}) {
 function broadcastBuffer(scheduleId) {
   const executions = buffer.filter(({id}) => id === scheduleId);
   buffer = buffer.filter(({id}) => id !== scheduleId);
-  const {who} = executions[0];
-  const {assetIn, assetOut} = executions[0].trade.data;
-  const amountIn = executions.reduce((sum, {trade}) => sum.add(trade.data.amountIn), new BN(0));
-  const amountOut = executions.reduce((sum, {trade}) => sum.add(trade.data.amountOut), new BN(0));
-  if (executions.length === 1) {
-    return swapHandler({who, assetIn, assetOut, amountIn, amountOut});
-  } else {
-    return swapHandler({
-      who,
-      assetIn,
-      assetOut,
-      amountIn,
-      amountOut
-    }, `split over ${executions.length} swaps`);
+  if (executions[0].trade) {
+    const {who} = executions[0];
+    const {assetIn, assetOut} = executions[0].trade.data;
+    const amountIn = executions.reduce((sum, {trade}) => sum.add(trade.data.amountIn), new BN(0));
+    const amountOut = executions.reduce((sum, {trade}) => sum.add(trade.data.amountOut), new BN(0));
+    if (executions.length === 1) {
+      return swapHandler({who, assetIn, assetOut, amountIn, amountOut});
+    } else {
+      return swapHandler({
+        who,
+        assetIn,
+        assetOut,
+        amountIn,
+        amountOut
+      }, `split over ${executions.length} swaps`);
+    }
   }
 }
 
-function terminator() {
+export function terminator() {
   const ids = new Set(buffer.map(({id}) => id));
   [...ids].map(broadcastBuffer);
 }
-
-['SIGHUP', 'SIGINT', 'SIGQUIT', 'SIGILL', 'SIGTRAP', 'SIGABRT',
-  'SIGBUS', 'SIGFPE', 'SIGUSR1', 'SIGSEGV', 'SIGUSR2', 'SIGTERM'
-].forEach(sig =>
-  process.on(sig, () => {
-    terminator();
-    setTimeout(() => process.exit(0), 500);
-  }));
 

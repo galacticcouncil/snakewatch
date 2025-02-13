@@ -1,4 +1,4 @@
-import {initApi, api} from './api.js';
+import {initApi, api, sdk} from './api.js';
 import {Events} from "./events.js";
 import xyk from "./handlers/xyk.js";
 import lbp from "./handlers/lbp.js";
@@ -7,23 +7,36 @@ import stableswap from "./handlers/stableswap.js";
 import router from "./handlers/router.js";
 import transfers from "./handlers/transfers.js";
 import otc from "./handlers/otc.js";
-import dca from "./handlers/dca.js";
+import dca, {terminator} from "./handlers/dca.js";
 import staking from "./handlers/staking.js";
 import referrals from "./handlers/referrals.js";
+import borrowing from "./handlers/borrowing.js";
 import {initDiscord} from "./discord.js";
 import {rpc, sha, token, channel} from "./config.js";
 import {currenciesHandler} from "./currencies.js";
+import {endpoints} from "./endpoints.js";
+import process from "node:process";
 
 async function main() {
   console.log('🐍⌚');
   console.log('snakewatch', sha);
+
   await initApi(rpc);
-  const {rpc: {system}} = api();
-  const [chain, version] = await Promise.all([system.chain(), system.version()]);
-  console.log(`connected to ${rpc} (${chain} ${version})`);
-  await initDiscord(token, channel);
+
+  if (!token || !channel) {
+    console.log('missing discord token or channel');
+    console.log('discord disabled');
+  } else {
+    await initDiscord(token, channel);
+  }
+
+  await endpoints.start();
 
   const events = new Events();
+
+  console.log('watching for new blocks');
+  events.startWatching();
+
   events.addHandler(currenciesHandler);
   events.addHandler(xyk);
   events.addHandler(lbp);
@@ -35,6 +48,7 @@ async function main() {
   events.addHandler(transfers);
   events.addHandler(staking);
   events.addHandler(referrals);
+  events.addHandler(borrowing);
 
   if (process.env.NODE_ENV === 'test') {
     console.log('testing mode: pushing testing blocks');
@@ -50,23 +64,28 @@ async function main() {
     for (const height of [...blockNumbers].sort()) {
       await events.emitFromBlock(height);
     }
-    const lookBack = 100;
+    const lookBack = process.env.LOOK_BACK || 10;
     console.log(`testing mode: pushing last ${lookBack} blocks`);
     const lastBlock = await api().query.system.number();
     for (let i = lastBlock - lookBack; i <= lastBlock; i++) {
       await events.emitFromBlock(i);
     }
   }
-
-  console.log('watching for new blocks');
-  events.startWatching();
 }
 
 main().catch(err => {
   console.error(err);
-  process.exit(1);
+  exit(1);
 });
 
+[
+  'SIGHUP', 'SIGINT', 'SIGQUIT', 'SIGILL', 'SIGTRAP', 'SIGABRT',
+  'SIGBUS', 'SIGFPE', 'SIGUSR1', 'SIGSEGV', 'SIGUSR2', 'SIGTERM'
+].forEach((signal, index) => process.on(signal, () => exit(128 + index + 1)));
 
+function exit(code = 0) {
+  terminator();
+  setTimeout(() => process.exit(code), 500);
+}
 
 

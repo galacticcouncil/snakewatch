@@ -1,4 +1,6 @@
 import {api} from './api.js';
+import ethers from "ethers";
+import {delay, timeout} from "./config.js";
 
 export class Events {
   listeners = [];
@@ -18,21 +20,43 @@ export class Events {
     return this;
   }
 
+  onLog(name, abi, callback) {
+    const iface = new ethers.utils.Interface(abi);
+    const filterPredicate = ({event: {data}}) => {
+      try {
+        return iface.parseLog(data.log.toHuman()).name === name;
+      } catch (e) {
+        return false;
+      }
+    }
+    const addedCallback = payload => {
+      payload.log = iface.parseLog(payload.event.data.log.toHuman());
+      return callback(payload);
+    };
+    this.listeners.push({section: 'evm', method: 'Log', filterPredicate, addedCallback});
+    return this;
+  }
+
   addHandler(handler) {
     handler(this);
   }
 
   startWatching() {
-    this.killWatcher = api().query.system.number(head => {
-      const block = head.toNumber() - 1;
+    let watchdogTimer;
+
+    const resetWatchdog = () => {
+      clearTimeout(watchdogTimer);
+
+      watchdogTimer = setTimeout(() => {
+        throw new Error(`no block received for ${timeout} seconds`);
+      }, timeout * 1000);
+    };
+
+    api().query.system.number(head => {
+      resetWatchdog();
+      const block = head.toNumber() - delay;
       this.emitFromBlock(block);
     });
-  }
-
-  stopWatching() {
-    if (this.killWatcher) {
-      this.killWatcher();
-    }
   }
 
   async emit(events) {
@@ -74,13 +98,13 @@ export const loadEvents = async blockNumber => api().rpc.chain.getBlockHash(bloc
   .then(hash => api().query.system.events.at(hash))
   .then(events => processEvents(events, blockNumber));
 
-export const processEvents = (events, blockNumber) => events.map(event => ({
-  blockNumber,
-  siblings: events
+export const processEvents = (events, blockNumber) => events.map(event => {
+  event.blockNumber = blockNumber;
+  event.siblings = events
     .filter(({phase}) => (phase.isInitialization && event.phase.isInitialization)
       || phase.isApplyExtrinsic
       && event.phase.isApplyExtrinsic
       && phase.asApplyExtrinsic.eq(event.phase.asApplyExtrinsic))
-    .map(({event}) => event),
-  ...event
-}));
+    .map(({event}) => event);
+  return event;
+});

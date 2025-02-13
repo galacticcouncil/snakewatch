@@ -1,5 +1,6 @@
 import {Client, GatewayIntentBits} from 'discord.js';
 import markdownToAnsi from 'markdown-to-ansi'
+import memoize from "memoizee";
 
 let _client = null;
 let _channel = null;
@@ -32,7 +33,10 @@ export function broadcast(message) {
     if (channel) {
       channel.send(message);
     } else {
-      throw new Error(`discord channel ${_channel} not connected`);
+      console.error(new Error(`discord channel ${_channel} not connected`));
+      process.exit(421);
     }
   }
 }
+
+export const broadcastOnce = memoize(broadcast);

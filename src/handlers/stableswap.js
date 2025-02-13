@@ -15,7 +15,7 @@ export default function stableswapHandler(events) {
 async function liquidityAddedHandler({event: {data: {who, poolId, shares, assets}}}) {
   const share = {currencyId: poolId, amount: shares};
   if (assets.length > 1) {
-    const value = usdValue(share);
+    const value = await usdValue(share);
     const message = `💦 pool hydrated for **${formatAmount(share)}**${formatUsdValue(value)} shares by ${formatAccount(who, isWhale(value))}`
     broadcast(message);
   } else {
@@ -27,7 +27,7 @@ async function liquidityAddedHandler({event: {data: {who, poolId, shares, assets
 async function liquidityRemovedHandler({event: {data: {who, poolId, shares, amounts}}}) {
   const share = {currencyId: poolId, amount: shares};
   if (amounts.length > 1) {
-    const value = usdValue(share);
+    const value = await usdValue(share);
     const message = `🚰 pool dehydrated for **${formatAmount(share)}**${formatUsdValue(value)} shares by ${formatAccount(who, isWhale(value))}`
     broadcast(message);
   } else {

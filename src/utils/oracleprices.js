@@ -1,16 +1,22 @@
-import {metrics} from '../metrics.js';
-import {sdk} from '../api.js';
+import { metrics } from '../metrics.js';
+import { sdk } from '../api.js';
 import PQueue from "p-queue";
-import {endpoints} from "../endpoints.js";
+import { endpoints } from "../endpoints.js";
 import memoize from "memoizee";
-import {broadcastOnce} from "../discord.js";
-import {formatPair, formatUsdNumber, getAssetIdFromSymbol, loadCurrency} from "../currencies.js";
+import { broadcastOnce } from "../discord.js";
+import {
+  formatPair,
+  formatUsdNumber,
+  getAssetIdFromSymbol,
+  loadCurrency,
+  symbol
+} from "../currencies.js";
 import ethers from "ethers";
 import Grafana from "./grafana.js";
-import {grafanaUrl, grafanaDatasource} from "../config.js";
+import { grafanaUrl, grafanaDatasource } from "../config.js";
 
 export default class OraclePrices {
-  constructor(priceDivergenceThreshold = 0.0002) {
+  constructor(priceDivergenceThreshold = 0.02) {
     this.prices = {};
     this.lastGlobalUpdate = -1;
     this.queue = new PQueue({concurrency: 20, timeout: 10000});
@@ -85,6 +91,7 @@ export default class OraclePrices {
       await inner(payload);
       const {log: {args: {key, value, timestamp}}, blockNumber} = payload;
       try {
+        // Use 'oracle' as a generic contract identifier
         await this.update(key, value, timestamp);
         this.metrics.last_update_block.set(blockNumber);
       } catch (e) {
@@ -106,20 +113,24 @@ export default class OraclePrices {
       console.log('loading oracle prices from grafana');
       const grafana = new Grafana(grafanaUrl, grafanaDatasource);
 
-      const query = `SELECT args ->>'key' AS pair, (args->>'value'):: numeric / 10^8 AS latest_value, to_timestamp((args->>'timestamp')::bigint) AS latest_timestamp, block_number AS latest_block_number
-                     FROM
-                         logs AS l1
-                     WHERE
-                         event_name = 'OracleUpdate'
-                       AND block_number = (
-                         SELECT MAX (block_number)
-                         FROM logs AS l2
-                         WHERE
-                         l2.event_name = 'OracleUpdate'
-                       AND l2.args->>'key' = l1.args->>'key'
-                         )
-                     ORDER BY
-                         pair`;
+      const query = `SELECT 
+        args->>'key' AS pair,
+        (args->>'value')::numeric / 10^8 AS latest_value,
+        to_timestamp((args->>'timestamp')::bigint) AS latest_timestamp,
+        block_number AS latest_block_number
+      FROM 
+        logs AS l1
+      WHERE 
+        event_name = 'OracleUpdate'
+        AND block_number = (
+          SELECT MAX(block_number)
+          FROM logs AS l2
+          WHERE 
+            l2.event_name = 'OracleUpdate'
+            AND l2.args->>'key' = l1.args->>'key'
+        )
+      ORDER BY 
+        pair`;
 
       const start = performance.now();
       try {
@@ -155,20 +166,9 @@ export default class OraclePrices {
                 // Queue up the spot price check and comparison
                 this.queue.add(async () => {
                   try {
-                    const tradeInfo = await sdk().getBestSpotPrice(baseAssetId, quoteAssetId);
-                    if (tradeInfo) {
-                      // Handle the case where tradeInfo returns amount and decimals
-                      let spotPrice;
-                      if (tradeInfo.amount !== undefined && tradeInfo.decimals !== undefined) {
-                        spotPrice = Number(tradeInfo.amount) / (10 ** Number(tradeInfo.decimals));
-                      } else if (tradeInfo.spotPrice !== undefined) {
-                        spotPrice = Number(tradeInfo.spotPrice) / (10 ** 12);
-                      } else {
-                        console.error(`Unexpected tradeInfo format for ${key}:`, tradeInfo);
-                        return;
-                      }
-
-                      const divergence = spotPrice > 0 ? (value - spotPrice) / spotPrice : 0;
+                    const spotPrice = await this.getSpotPrice(baseAssetId, quoteAssetId);
+                    if (spotPrice !== null) {
+                      const divergence = this.calculateDivergence(value, spotPrice);
 
                       // Update metrics
                       this.metrics.spot_price.set({asset_pair: key}, spotPrice);
@@ -186,12 +186,7 @@ export default class OraclePrices {
                       };
 
                       // Alert if divergence exceeds threshold
-                      if (Math.abs(divergence) > this.priceDivergenceThreshold) {
-                        const formattedPair = await formatPair(baseAssetId, quoteAssetId);
-                        const divergencePercent = (divergence * 100).toFixed(2);
-                        const direction = divergence > 0 ? 'higher' : 'lower';
-                        broadcastOnce(`:warning: ${formattedPair} price divergence detected, oracle price ${formatUsdNumber(value)} is **${Math.abs(divergencePercent)}%** ${direction} than spot price ${formatUsdNumber(spotPrice)}`);
-                      }
+                      await this.checkAndAlertDivergence(baseAssetId, quoteAssetId, value, spotPrice, divergence);
                     }
                   } catch (e) {
                     console.error(`Failed to get spot price for ${key}:`, e);
@@ -248,19 +243,19 @@ export default class OraclePrices {
         if (key.includes('/')) {
           [baseAsset, quoteAsset] = key.split('/');
 
+          // Try to get spot price using the router
           try {
             // Convert symbol to asset IDs if needed
             const baseAssetId = await getAssetIdFromSymbol(baseAsset);
             const quoteAssetId = await getAssetIdFromSymbol(quoteAsset);
 
             if (baseAssetId && quoteAssetId) {
-              // Get spot price from router
-              const tradeInfo = await sdk().getBestSpotPrice(baseAssetId, quoteAssetId);
-              if (tradeInfo) {
-               const spotPrice = Number(tradeInfo.amount) / (10 ** Number(tradeInfo.decimals));
+              // Get spot price from router using our helper
+              const spotPrice = await this.getSpotPrice(baseAssetId, quoteAssetId);
 
-                // Calculate divergence as percentage
-                const divergence = spotPrice > 0 ? (oraclePrice - spotPrice) / spotPrice : 0;
+              if (spotPrice !== null) {
+                // Calculate divergence as percentage using our helper
+                const divergence = this.calculateDivergence(oraclePrice, spotPrice);
 
                 // Set metrics
                 this.metrics.oracle_price.set({asset_pair: assetPair, key}, oraclePrice);
@@ -282,12 +277,7 @@ export default class OraclePrices {
                 };
 
                 // Alert if divergence exceeds threshold
-                if (Math.abs(divergence) > this.priceDivergenceThreshold) {
-                  const formattedPair = await formatPair(baseAssetId, quoteAssetId);
-                  const divergencePercent = (divergence * 100).toFixed(2);
-                  const direction = divergence > 0 ? 'higher' : 'lower';
-                  broadcastOnce(`:warning: Price divergence detected for ${formattedPair}: Oracle price ${formatUsdNumber(oraclePrice)} is **${Math.abs(divergencePercent)}%** ${direction} than spot price ${formatUsdNumber(spotPrice)}`);
-                }
+                await this.checkAndAlertDivergence(baseAssetId, quoteAssetId, oraclePrice, spotPrice, divergence);
               }
             }
           } catch (e) {
@@ -317,6 +307,46 @@ export default class OraclePrices {
     this.metrics.queue_pending.set(this.queue.pending);
   }
 
+  // Helper to get spot price from router
+  async getSpotPrice(baseAssetId, quoteAssetId) {
+    try {
+      const tradeInfo = await sdk().getBestSpotPrice(baseAssetId, quoteAssetId);
+
+      if (!tradeInfo) {
+        return null;
+      }
+
+      // Handle different formats that tradeInfo might return
+      if (tradeInfo.amount !== undefined && tradeInfo.decimals !== undefined) {
+        return Number(tradeInfo.amount) / (10 ** Number(tradeInfo.decimals));
+      } else if (tradeInfo.spotPrice !== undefined) {
+        return Number(tradeInfo.spotPrice) / (10 ** 12);
+      } else {
+        console.error(`Unexpected tradeInfo format for ${baseAssetId}/${quoteAssetId}:`, tradeInfo);
+        return null;
+      }
+    } catch (e) {
+      console.error(`Failed to get spot price for ${baseAssetId}/${quoteAssetId}:`, e);
+      return null;
+    }
+  }
+
+  // Helper to calculate price divergence
+  calculateDivergence(oraclePrice, spotPrice) {
+    return spotPrice > 0 ? (oraclePrice - spotPrice) / spotPrice : 0;
+  }
+
+  // Helper to check for significant divergence and broadcast alert if needed
+  async checkAndAlertDivergence(baseAssetId, quoteAssetId, oraclePrice, spotPrice, divergence) {
+    if (Math.abs(divergence) > this.priceDivergenceThreshold) {
+      const divergencePercent = (divergence * 100).toFixed(2);
+      const direction = divergence > 0 ? 'higher' : 'lower';
+      broadcastOnce(`:warning: ${symbol(baseAssetId)} price divergence detected! Oracle price ${formatUsdNumber(oraclePrice)} is **${Math.abs(divergencePercent)}%** ${direction} than spot price ${formatUsdNumber(spotPrice)}`);
+      return true;
+    }
+    return false;
+  }
+
   async updateAll(blockNumber) {
     if (blockNumber <= this.lastGlobalUpdate) {
       return;
@@ -330,10 +360,9 @@ export default class OraclePrices {
       try {
         const data = this.prices[key];
         if (data.baseAssetId && data.quoteAssetId) {
-          const tradeInfo = await sdk().getBestSpotPrice(data.baseAssetId, data.quoteAssetId);
-          if (tradeInfo) {
-            const spotPrice = Number(tradeInfo.amount) / (10 ** Number(tradeInfo.decimals));
-            const divergence = (data.oraclePrice - spotPrice) / spotPrice;
+          const spotPrice = await this.getSpotPrice(data.baseAssetId, data.quoteAssetId);
+          if (spotPrice !== null) {
+            const divergence = this.calculateDivergence(data.oraclePrice, spotPrice);
 
             // Update metrics
             this.metrics.spot_price.set({asset_pair: key}, spotPrice);
@@ -346,6 +375,9 @@ export default class OraclePrices {
               divergence,
               updated: Date.now()
             };
+
+            // Check if we need to alert on divergence
+            await this.checkAndAlertDivergence(data.baseAssetId, data.quoteAssetId, data.oraclePrice, spotPrice, divergence);
           }
         }
       } catch (e) {

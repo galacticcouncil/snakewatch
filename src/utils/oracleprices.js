@@ -5,7 +5,6 @@ import { endpoints } from "../endpoints.js";
 import memoize from "memoizee";
 import { broadcastOnce } from "../discord.js";
 import {
-  formatPair,
   formatUsdNumber,
   getAssetIdFromSymbol,
   loadCurrency,
@@ -341,7 +340,7 @@ export default class OraclePrices {
     if (Math.abs(divergence) > this.priceDivergenceThreshold) {
       const divergencePercent = (divergence * 100).toFixed(2);
       const direction = divergence > 0 ? 'higher' : 'lower';
-      broadcastOnce(`:warning: ${symbol(baseAssetId)} price divergence detected! Oracle price ${formatUsdNumber(oraclePrice)} is **${Math.abs(divergencePercent)}%** ${direction} than spot price ${formatUsdNumber(spotPrice)}`);
+      broadcastOnce(`:warning: **${symbol(baseAssetId)}** borrowing oracle price **${formatUsdNumber(oraclePrice)}** is **${Math.abs(divergencePercent)}%** ${direction} than router spot price`);
       return true;
     }
     return false;

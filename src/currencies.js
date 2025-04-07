@@ -119,3 +119,34 @@ export const formatUsdValue = value => {
 };
 export const formatUsdNumber = amount => new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD'}).format(amount);
 export const formatAsset = async asset => `**${formatAmount(asset)}**${asset.currencyId.toString() === usdCurrencyId ? formatUsdValue(await usdValue(asset)) : ''}`;
+
+// Format a trading pair for display
+export const formatPair = async (baseAssetId, quoteAssetId) => {
+  // Ensure currencies are loaded
+  await Promise.all([loadCurrency(baseAssetId), loadCurrency(quoteAssetId)]);
+
+  // Get the symbols
+  const baseSymbol = symbol(baseAssetId);
+  const quoteSymbol = symbol(quoteAssetId);
+
+  // Return formatted pair
+  return `**${baseSymbol}/${quoteSymbol}**`;
+};
+
+export function getAssetIdFromSymbol(symbolName) {
+  const currencyEntries = Object.entries(currencies);
+
+  for (const [id, currency] of currencyEntries) {
+    if (currency.symbol === symbolName) {
+      return id.toString();
+    }
+  }
+
+  // Handle special cases
+  if (symbolName === 'USD') {
+    // Use USDT instead of USD
+    return getAssetIdFromSymbol('USDT');
+  }
+
+  return null;
+}

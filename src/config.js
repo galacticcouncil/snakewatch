@@ -13,4 +13,5 @@ export const grafanaUrl = process.env.GRAFANA;
 export const grafanaDatasource = process.env.GRAFANA_DATASOURCE || 10;
 export const port = process.env.PORT || 3000;
 export const liquidationAlert = Number(process.env.LIQ_ALERT);
+export const priceDivergenceThreshold = Number(process.env.PRICE_DIVERGENCE) || 0.03; // Default 3%
 export const timeout = Number(process.env.TIMEOUT) || 120;

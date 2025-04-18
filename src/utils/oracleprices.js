@@ -6,7 +6,6 @@ import memoize from "memoizee";
 import { broadcastOnce } from "../discord.js";
 import {
   formatUsdNumber,
-  getAssetIdFromSymbol,
   loadCurrency,
   symbol
 } from "../currencies.js";
@@ -15,7 +14,7 @@ import Grafana from "./grafana.js";
 import { grafanaUrl, grafanaDatasource } from "../config.js";
 
 export default class OraclePrices {
-  constructor(priceDivergenceThreshold = 0.02) {
+  constructor(priceDivergenceThreshold) {
     this.prices = {};
     this.lastGlobalUpdate = -1;
     this.queue = new PQueue({concurrency: 20, timeout: 10000});
@@ -77,7 +76,7 @@ export default class OraclePrices {
       GET: (_, res) => res.json({
         lastGlobalUpdate: this.lastGlobalUpdate,
         lastUpdate: this.metrics.last_update_block.hashMap[''].value || -1,
-        prices: this.byDivergence().filter(([, data]) => Math.abs(data.divergence) > this.priceDivergenceThreshold)
+        prices: this.byDivergence(),
       }),
     }, '/:key': {
       GET: ({params: {key}}, res) => res.json(this.byDivergence().filter(([pairKey]) => key === pairKey).map(([_, data]) => data)),
@@ -105,8 +104,8 @@ export default class OraclePrices {
   async init() {
     endpoints.registerEndpoint('oracleprices', this.api);
 
-    let assets = await sdk().getAllAssets();
-    await Promise.all(assets.map(async ({id}) => await loadCurrency(id)));
+    this.assets = await sdk().getAllAssets();
+    await Promise.all(this.assets.map(async ({id}) => await loadCurrency(id)));
 
     if (grafanaUrl) {
       console.log('loading oracle prices from grafana');
@@ -158,8 +157,8 @@ export default class OraclePrices {
           if (key.includes('/')) {
             try {
               const [baseAsset, quoteAsset] = key.split('/');
-              const baseAssetId = await getAssetIdFromSymbol(baseAsset);
-              const quoteAssetId = await getAssetIdFromSymbol(quoteAsset);
+              const baseAssetId = this.getAssetIdFromSymbol(baseAsset);
+              const quoteAssetId = this.getAssetIdFromSymbol(quoteAsset);
 
               if (baseAssetId && quoteAssetId) {
                 // Queue up the spot price check and comparison
@@ -209,6 +208,11 @@ export default class OraclePrices {
     }
   }
 
+  getAssetIdFromSymbol(s) {
+    if (s === "USD") return  this.getAssetIdFromSymbol("USDT");
+    return this.assets.find(({symbol}) => symbol.toUpperCase() === s.toUpperCase())?.id;
+  }
+
   async update(key, value, timestamp) {
     this.metrics.queue_length.set(this.queue.size);
     this.metrics.queue_pending.set(this.queue.pending);
@@ -245,8 +249,8 @@ export default class OraclePrices {
           // Try to get spot price using the router
           try {
             // Convert symbol to asset IDs if needed
-            const baseAssetId = await getAssetIdFromSymbol(baseAsset);
-            const quoteAssetId = await getAssetIdFromSymbol(quoteAsset);
+            const baseAssetId = this.getAssetIdFromSymbol(baseAsset);
+            const quoteAssetId = this.getAssetIdFromSymbol(quoteAsset);
 
             if (baseAssetId && quoteAssetId) {
               // Get spot price from router using our helper
@@ -337,7 +341,7 @@ export default class OraclePrices {
 
   // Helper to check for significant divergence and broadcast alert if needed
   async checkAndAlertDivergence(baseAssetId, quoteAssetId, oraclePrice, spotPrice, divergence) {
-    if (Math.abs(divergence) > this.priceDivergenceThreshold) {
+    if (this.priceDivergenceThreshold && Math.abs(divergence) > this.priceDivergenceThreshold) {
       const divergencePercent = (divergence * 100).toFixed(2);
       const direction = divergence > 0 ? 'higher' : 'lower';
       broadcastOnce(`:warning: **${symbol(baseAssetId)}** borrowing oracle price **${formatUsdNumber(oraclePrice)}** is **${Math.abs(divergencePercent)}%** ${direction} than router spot price`);

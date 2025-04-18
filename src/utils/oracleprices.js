@@ -14,7 +14,7 @@ import Grafana from "./grafana.js";
 import { grafanaUrl, grafanaDatasource } from "../config.js";
 
 export default class OraclePrices {
-  constructor(priceDivergenceThreshold = 0.02) {
+  constructor(priceDivergenceThreshold) {
     this.prices = {};
     this.lastGlobalUpdate = -1;
     this.queue = new PQueue({concurrency: 20, timeout: 10000});
@@ -76,7 +76,7 @@ export default class OraclePrices {
       GET: (_, res) => res.json({
         lastGlobalUpdate: this.lastGlobalUpdate,
         lastUpdate: this.metrics.last_update_block.hashMap[''].value || -1,
-        prices: this.byDivergence().filter(([, data]) => Math.abs(data.divergence) > this.priceDivergenceThreshold)
+        prices: this.byDivergence(),
       }),
     }, '/:key': {
       GET: ({params: {key}}, res) => res.json(this.byDivergence().filter(([pairKey]) => key === pairKey).map(([_, data]) => data)),
@@ -341,7 +341,7 @@ export default class OraclePrices {
 
   // Helper to check for significant divergence and broadcast alert if needed
   async checkAndAlertDivergence(baseAssetId, quoteAssetId, oraclePrice, spotPrice, divergence) {
-    if (Math.abs(divergence) > this.priceDivergenceThreshold) {
+    if (this.priceDivergenceThreshold && Math.abs(divergence) > this.priceDivergenceThreshold) {
       const divergencePercent = (divergence * 100).toFixed(2);
       const direction = divergence > 0 ? 'higher' : 'lower';
       broadcastOnce(`:warning: **${symbol(baseAssetId)}** borrowing oracle price **${formatUsdNumber(oraclePrice)}** is **${Math.abs(divergencePercent)}%** ${direction} than router spot price`);

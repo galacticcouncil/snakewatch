@@ -89,7 +89,7 @@ export default class Borrowers {
       await inner(payload);
       const {log: {args: {user}}, event: {data: {log: {address}}}, blockNumber} = payload;
       try {
-        await this.update(address.toHex(), user);
+        await this.update(address.toHex(), user?.toLowerCase());
         this.metrics.last_update_block.set(blockNumber);
       } catch (e) {
         console.error('failed to update borrower health', address, e);

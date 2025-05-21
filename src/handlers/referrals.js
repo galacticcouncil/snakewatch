@@ -1,6 +1,7 @@
 import process from 'node:process';
 import {broadcast} from "../discord.js";
 import {formatAmount, formatUsdValue, usdValue} from "../currencies.js";
+import {isSameAccount} from "../utils/emojify.js";
 
 export default function referralsHandler(events) {
   events
@@ -9,7 +10,7 @@ export default function referralsHandler(events) {
 
 const referralPot = '7L53bUTCCAvmCxhe15maHwJZbjQYH89LkXuyTnTi1J58xyFC';
 
-export const notByReferralPot = ({event: {data: {who}}}) => who.toString() !== referralPot;
+export const notByReferralPot = ({event: {data: {who}}}) => !isSameAccount(who.toString(), referralPot);
 
 const window = 150;
 let accrued = 0;

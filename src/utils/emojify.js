@@ -1,4 +1,24 @@
-export const emojify = address => degens[address] || emojis[(Number(address.toHex())/2) % emojis.length];
+import {decodeAddress} from '@polkadot/util-crypto';
+
+const toHex = address => {
+  try {
+    return address.toHex ? address.toHex() : '0x' + Buffer.from(decodeAddress(address)).toString('hex');
+  } catch (e) {
+    return null;
+  }
+};
+
+export const isSameAccount = (addr1, addr2) => {
+  const hex1 = toHex(addr1);
+  const hex2 = toHex(addr2);
+  return hex1 && hex2 && hex1 === hex2;
+};
+
+export const emojify = address => {
+  const degenAddress = Object.keys(degens).find(key => isSameAccount(key, address));
+  return degenAddress ? degens[degenAddress] : emojis[(Number(toHex(address)) / 2) % emojis.length];
+};
+
 const emojis = ['🐵', '🐒', '🦍', '🦧', '🐶', '🐕', '🦮', '🐕‍🦺', '🐩', '🐺', '🦊', '🦝', '🐱', '🐈', '🐈‍⬛', '🦁', '🐯', '🐅', '🐆', '🐴', '🐎', '🦄', '🦓', '🦌', '🐮', '🐂', '🐃', '🐄', '🐷', '🐖', '🐗', '🐽', '🐏', '🐑', '🐐', '🐪', '🐫', '🦙', '🦒', '🐘', '🦏', '🦛', '🐭', '🐁', '🐀', '🐹', '🐰', '🐇', '🐿', '🦔', '🦇', '🐻', '🐻‍❄️', '🐨', '🐼', '🦥', '🦦', '🦨', '🦘', '🦡', '🐾', '🦃', '🐔', '🐓', '🐣', '🐤', '🐥', '🐦', '🐧', '🕊', '🦅', '🦆', '🦢', '🦉', '🦩', '🦚', '🦜', '🐸', '🐊', '🐢', '🦎', '🐍', '🐲', '🐉', '🦕', '🦖', '🐬', '🐟', '🐠', '🐡', '🦈', '🐙', '🐚', '🐌', '🦋', '🐛', '🐜', '🐝', '🐞', '🦗', '🕷', '🦂', '🦟', '🦠', '💐', '🌸', '💮', '🏵', '🌹', '🥀', '🌺', '🌻', '🌼', '🌷', '🌱', '🌲', '🌳', '🌴', '🌵', '🌾', '🌿', '☘', '🍀', '🍁', '🍂', '🍃', '🍄',];
 
 /*

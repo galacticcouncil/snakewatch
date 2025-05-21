@@ -5,7 +5,7 @@ import {isSameAccount} from "../utils/emojify.js";
 
 export default function referralsHandler(events) {
   events
-    .onFilter('balances', 'Transfer', ({event: {data: {to}}}) => to.toString() === referralPot, transferHandler)
+    .onFilter('balances', 'Transfer', ({event: {data: {to}}}) => isSameAccount(to.toString(), referralPot), transferHandler)
 }
 
 const referralPot = '7L53bUTCCAvmCxhe15maHwJZbjQYH89LkXuyTnTi1J58xyFC';

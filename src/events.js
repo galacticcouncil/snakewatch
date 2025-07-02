@@ -20,11 +20,13 @@ export class Events {
     return this;
   }
 
-  onLog(name, abi, callback) {
+  onLog(name, abi, callback, filter = () => true) {
     const iface = new ethers.utils.Interface(abi);
-    const filterPredicate = ({event: {data}}) => {
+    const filterPredicate = (payload) => {
       try {
-        return iface.parseLog(data.log.toHuman()).name === name;
+        const {event: {data}} = payload;
+        payload.log = iface.parseLog(data.log.toHuman());
+        return payload.log.name === name && filter(payload);
       } catch (e) {
         return false;
       }

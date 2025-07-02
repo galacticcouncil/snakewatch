@@ -5,14 +5,15 @@ import oracleAbi from "../resources/dia-oracle.abi.js";
 import ERC20Mapping from "../utils/erc20mapping.js";
 import {toAccount} from "../utils/evm.js";
 import Borrowers from "../utils/borrowers.js";
+import {notInRouter} from "./router.js";
 
 const borrowers = new Borrowers();
 
 export default function borrowingHandler(events) {
   borrowers.init();
   events
-    .onLog('Supply', poolAbi, borrowers.handler(supply))
-    .onLog('Withdraw', poolAbi, borrowers.handler(withdraw))
+    .onLog('Supply', poolAbi, borrowers.handler(supply), notInRouter)
+    .onLog('Withdraw', poolAbi, borrowers.handler(withdraw), notInRouter)
     .onLog('Borrow', poolAbi, borrowers.handler(borrow))
     .onLog('Repay', poolAbi, borrowers.handler(repay))
     .onLog('LiquidationCall', poolAbi, borrowers.handler(liquidationCall))

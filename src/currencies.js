@@ -59,7 +59,7 @@ export async function usdValue({currencyId, amount}) {
   if (currencyId.toString() === usdCurrencyId) return null;
   try {
     const spot = await sdk().getBestSpotPrice(currencyId.toString(), usdCurrencyId);
-    return (amount / 10 ** decimals(currencyId)) * spot.amount;
+    return (Number(amount) / 10 ** decimals(currencyId)) * spot.amount;
   } catch (e) {
     console.log('failed to get USD price from router:', e.message);
     return recordedUsdValue({currencyId, amount});
@@ -118,4 +118,4 @@ export const formatUsdValue = value => {
   return ` *~ ${new Intl.NumberFormat('en-US', {maximumSignificantDigits: amount < 1 ? 1 : 4, maximumFractionDigits: 2}).format(amount).replace(/,/g, " ")} ${symbol}*`;
 };
 export const formatUsdNumber = amount => new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD'}).format(amount);
-export const formatAsset = async asset => `**${formatAmount(asset)}**${asset.currencyId.toString() === usdCurrencyId ? formatUsdValue(await usdValue(asset)) : ''}`;
+export const formatAsset = async asset => `**${formatAmount(asset)}**${asset.currencyId.toString() !== usdCurrencyId ? formatUsdValue(await usdValue(asset)) : ''}`;

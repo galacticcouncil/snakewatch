@@ -1,6 +1,7 @@
 import {api} from './api.js';
 import ethers from "ethers";
 import {delay, timeout} from "./config.js";
+import memoize from "memoizee";
 
 export class Events {
   listeners = [];
@@ -56,12 +57,13 @@ export class Events {
 
     api().query.system.number(head => {
       resetWatchdog();
-      const block = head.toNumber() - delay;
-      this.emitFromBlock(block);
+      const number = head.toNumber() - delay;
+      this.emitFromBlock(number);
     });
   }
 
-  async emit(events) {
+  async emit(hash, number) {
+    const events = await loadEventsFromHash(number, hash);
     const listeners = this.listeners;
     const callbacks = events.flatMap(e => listeners
         .filter(({method, section, filterPredicate}) =>
@@ -76,10 +78,12 @@ export class Events {
     return callbacks.length;
   }
 
+  emitOnce = memoize(this.emit.bind(this), {primitive: true, length: 1, max: 1000});
+
   async emitFromBlock(blocknumber) {
-    console.log(`block ${blocknumber}`);
-    return loadEvents(blocknumber)
-      .then(events => this.emit(events))
+    const hash = await api().rpc.chain.getBlockHash(blocknumber);
+    console.log(`#${blocknumber}: ${hash}`);
+    return this.emitOnce(hash, blocknumber)
       .catch(err => console.error(`failed to load ${blocknumber}:`, err.toString()));
   }
 
@@ -97,11 +101,14 @@ export class Events {
 }
 
 export const loadEvents = async blockNumber => api().rpc.chain.getBlockHash(blockNumber)
-  .then(hash => api().query.system.events.at(hash))
-  .then(events => processEvents(events, blockNumber));
+  .then(hash => loadEventsFromHash(blockNumber, hash));
 
-export const processEvents = (events, blockNumber) => events.map(event => {
+export const loadEventsFromHash = async (blockNumber, blockHash) => api().query.system.events.at(blockHash)
+  .then(events => processEvents(events, blockNumber, blockHash));
+
+export const processEvents = (events, blockNumber, blockHash) => events.map(event => {
   event.blockNumber = blockNumber;
+  event.blockHash = blockHash;
   event.siblings = events
     .filter(({phase}) => (phase.isInitialization && event.phase.isInitialization)
       || phase.isApplyExtrinsic

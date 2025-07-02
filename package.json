@@ -9,7 +9,7 @@
     "start:rococo": "RPC_URL=wss://hydradx-rococo-rpc.play.hydration.cloud npm run start",
     "start:mainnet": "USD_TOKEN=2 RPC_URL=wss://rpc.basilisk.cloud npm run start",
     "start:test": "USD_TOKEN=2 NODE_ENV=test RPC_URL=wss://rpc.basilisk.cloud npm run start",
-    "start:test:omnipool": "USD_TOKEN=2 NODE_ENV=test WHALE_AMOUNT=100000000 RPC_URL=wss://rpc.hydradx.cloud npm run start"
+    "start:test:omnipool": "USD_TOKEN=10 DELAY=3 NODE_ENV=test WHALE_AMOUNT=100000000 RPC_URL=wss://rpc.hydradx.cloud npm run start"
   },
   "repository": {
     "type": "git",

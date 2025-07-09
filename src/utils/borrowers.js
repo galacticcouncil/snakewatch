@@ -9,12 +9,14 @@ import {endpoints} from "../endpoints.js";
 import memoize from "memoizee";
 import {broadcastOnce} from "../discord.js";
 import {formatAccount, formatUsdNumber, loadCurrency} from "../currencies.js";
+import Alerts from "./alerts.js";
 
 export default class Borrowers {
   constructor() {
     this.health = {};
     this.lastGlobalUpdate = -1;
     this.queue = new PQueue({concurrency: 20, timeout: 10000});
+    this.alerts = new Alerts();
 
     this.metrics = metrics.register('borrowers', {
       // Health metrics
@@ -104,6 +106,7 @@ export default class Borrowers {
   async init() {
     await loadCurrency(0);
     endpoints.registerEndpoint('borrowers', this.api);
+    await this.alerts.init();
     if (grafanaUrl) {
       console.log('loading borrowers from grafana');
       const grafana = new Grafana(grafanaUrl, grafanaDatasource);
@@ -144,6 +147,8 @@ export default class Borrowers {
           const health = `:${data.healthFactor < 1 ? 'broken_heart' : 'heart'}:**${(Math.floor(data.healthFactor * 100) / 100).toFixed(2)}**`;
           broadcastOnce(`:rotating_light: liquidation imminent for ${formatAccount(data.account)} position ${health} with **${formatUsdNumber(data.totalCollateralBase)}** collateral at risk `);
         }
+
+        await this.alerts.checkHealthFactor(data.account.toString(), data.healthFactor);
 
         this.health[contract].set(address, data);
         this.byHealth.clear();

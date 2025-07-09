@@ -23,3 +23,23 @@
 - **src/utils/**: Shared utility functions
 - **src/resources/**: ABI definitions and other resources
 - **tests/**: Jest test files
+
+## Alerts System
+The bot includes a comprehensive alerts system for Slack notifications. See **ALERTS.md** for detailed configuration instructions.
+
+### Quick Setup
+```bash
+# Required: Slack webhook URL
+ALERT_WEBHOOK_SLACK="https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
+
+# Optional: Health factor monitoring
+ALERT_HF='[["account_address", 1.01]]'
+
+# Optional: Interest rate monitoring
+ALERT_RATE='[["DOT", "borrow", "5%"], ["GDOT", "supply", "10%"]]'
+
+# Optional: Price delta monitoring
+ALERT_PRICE_DELTA='[["GDOT/DOT", "5%", "10m"]]'
+```
+
+The alerts system is initialized automatically when the bot starts. For complete configuration options, troubleshooting, and examples, see **ALERTS.md**.

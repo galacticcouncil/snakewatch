@@ -12,7 +12,7 @@ import {
 import ethers from "ethers";
 import Grafana from "./grafana.js";
 import { grafanaUrl, grafanaDatasource } from "../config.js";
-import Alerts from "./alerts.js";
+import {getAlerts} from "./alerts.js";
 
 export default class OraclePrices {
   constructor(priceDivergenceThreshold) {
@@ -20,7 +20,6 @@ export default class OraclePrices {
     this.lastGlobalUpdate = -1;
     this.queue = new PQueue({concurrency: 20, timeout: 10000});
     this.priceDivergenceThreshold = priceDivergenceThreshold;
-    this.alerts = new Alerts();
 
     this.metrics = metrics.register('oracleprices', {
       // Price metrics
@@ -105,7 +104,6 @@ export default class OraclePrices {
 
   async init() {
     endpoints.registerEndpoint('oracleprices', this.api);
-    await this.alerts.init();
 
     this.assets = await sdk().getAllAssets();
     await Promise.all(this.assets.map(async ({id}) => await loadCurrency(id)));
@@ -286,7 +284,8 @@ export default class OraclePrices {
                 await this.checkAndAlertDivergence(baseAssetId, quoteAssetId, oraclePrice, spotPrice, divergence);
                 
                 // Check for price delta alerts
-                await this.alerts.checkPriceDelta(key, oraclePrice);
+                const alerts = getAlerts();
+                await alerts.checkPriceDelta(key, oraclePrice);
               }
             }
           } catch (e) {
@@ -303,7 +302,8 @@ export default class OraclePrices {
           };
           
           // Check for price delta alerts even for simple prices
-          await this.alerts.checkPriceDelta(key, oraclePrice);
+          const alerts = getAlerts();
+          await alerts.checkPriceDelta(key, oraclePrice);
         }
 
         this.byDivergence.clear();

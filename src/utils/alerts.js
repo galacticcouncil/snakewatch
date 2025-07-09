@@ -2,7 +2,7 @@ import { metrics } from '../metrics.js';
 import { endpoints } from "../endpoints.js";
 import memoize from "memoizee";
 
-export default class Alerts {
+class Alerts {
   constructor() {
     this.activeAlerts = new Map();
     this.alertHistory = [];
@@ -261,3 +261,21 @@ export default class Alerts {
     return `${seconds}s`;
   }
 }
+
+// Singleton instance
+let alertsInstance = null;
+
+export function getAlerts() {
+  if (!alertsInstance) {
+    alertsInstance = new Alerts();
+  }
+  return alertsInstance;
+}
+
+export async function initAlerts() {
+  const alerts = getAlerts();
+  await alerts.init();
+  return alerts;
+}
+
+export default getAlerts;

@@ -6,6 +6,7 @@ import ERC20Mapping from "../utils/erc20mapping.js";
 import {toAccount} from "../utils/evm.js";
 import Borrowers from "../utils/borrowers.js";
 import {notInRouter} from "./router.js";
+import {getAlerts} from "../utils/alerts.js";
 import ethers from "ethers";
 
 const borrowers = new Borrowers();
@@ -65,8 +66,9 @@ async function reserveDataUpdated({log: {args: {reserve, liquidityRate, stableBo
     const supplyRate = Number(ethers.utils.formatUnits(liquidityRate, 27));
     const borrowRate = Number(ethers.utils.formatUnits(variableBorrowRate, 27));
     
-    await borrowers.alerts.checkInterestRate(reserveSymbol, 'supply', supplyRate);
-    await borrowers.alerts.checkInterestRate(reserveSymbol, 'borrow', borrowRate);
+    const alerts = getAlerts();
+    await alerts.checkInterestRate(reserveSymbol, 'supply', supplyRate);
+    await alerts.checkInterestRate(reserveSymbol, 'borrow', borrowRate);
   }
 }
 

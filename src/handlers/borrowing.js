@@ -63,12 +63,19 @@ async function reserveDataUpdated({log: {args: {reserve, liquidityRate, stableBo
   const reserveSymbol = symbol(currencyId);
   
   if (reserveSymbol) {
-    const supplyRate = Number(ethers.utils.formatUnits(liquidityRate, 27));
-    const borrowRate = Number(ethers.utils.formatUnits(variableBorrowRate, 27));
+    // AAVE rates are in Ray format (27 decimals) and represent annual rates (APR)
+    // Convert from Ray to decimal percentage, then calculate APY using continuous compounding
+    const supplyAPR = Number(ethers.utils.formatUnits(liquidityRate, 27));
+    const borrowAPR = Number(ethers.utils.formatUnits(variableBorrowRate, 27));
+    
+    // Convert APR to APY using continuous compounding: APY = e^(APR) - 1
+    // This accounts for AAVE's block-by-block compounding
+    const supplyAPY = Math.exp(supplyAPR) - 1;
+    const borrowAPY = Math.exp(borrowAPR) - 1;
     
     const alerts = getAlerts();
-    await alerts.checkInterestRate(reserveSymbol, 'supply', supplyRate);
-    await alerts.checkInterestRate(reserveSymbol, 'borrow', borrowRate);
+    await alerts.checkInterestRate(reserveSymbol, 'supply', supplyAPY);
+    await alerts.checkInterestRate(reserveSymbol, 'borrow', borrowAPY);
   }
 }
 

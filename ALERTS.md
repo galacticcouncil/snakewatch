@@ -32,19 +32,21 @@ ALERT_HF='[["12xgGUHYjGRxFxbvdmC24RbBKwnhWnhjUtZ121whCfFk4w59", 1.01], ["another
 
 ### ALERT_RATE (Interest Rate Monitoring)
 **Type:** JSON array of `[reserve, type, rate]` triples  
-**Purpose:** Monitor interest rates and alert when they exceed thresholds
+**Purpose:** Monitor annual percentage yields (APY) and alert when they exceed thresholds
 
 ```bash
 ALERT_RATE='[["DOT", "borrow", "5%"], ["GDOT", "supply", "10%"], ["USDT", "borrow", "8%"]]'
 ```
 
 **Rate Types:**
-- `"borrow"` - Borrowing/lending rates
-- `"supply"` - Supply/deposit rates
+- `"borrow"` - Variable borrowing rates (APY with compounding)
+- `"supply"` - Liquidity supply rates (APY with compounding)
 
 **Alert Behavior:**
-- **Borrow rates**: 🚨 TRIGGERED when rate > threshold, ✅ RESOLVED when rate <= threshold
-- **Supply rates**: 🚨 TRIGGERED when rate < threshold, ✅ RESOLVED when rate >= threshold
+- **Borrow rates**: 🚨 TRIGGERED when APY > threshold, ✅ RESOLVED when APY <= threshold
+- **Supply rates**: 🚨 TRIGGERED when APY < threshold, ✅ RESOLVED when APY >= threshold
+
+**Technical Note:** Rates are automatically converted from AAVE's Ray format (27 decimals) to APR, then converted to APY using continuous compounding (`APY = e^(APR) - 1`) to accurately reflect AAVE's block-by-block interest accrual.
 
 ### ALERT_PRICE_DELTA (Price Change Monitoring)
 **Type:** JSON array of `[pair, percentage, window]` triples  
@@ -104,8 +106,8 @@ ALERT_PRICE_DELTA='[
 
 ### Interest Rate Alerts
 ```
-🚨 **ALERT TRIGGERED** - DOT borrow rate 6.00% exceeds threshold 5%
-✅ **ALERT RESOLVED** - DOT borrow rate 4.00% within threshold 5%
+🚨 **ALERT TRIGGERED** - DOT borrow rate 6.54% APY exceeds threshold 5%
+✅ **ALERT RESOLVED** - DOT borrow rate 4.08% APY within threshold 5%
 ```
 
 ### Price Delta Alerts

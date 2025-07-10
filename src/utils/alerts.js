@@ -209,7 +209,7 @@ class Alerts {
           state = rate < threshold ? 'BAD' : 'GOOD';
         }
         
-        const message = `${reserve} ${type} rate ${(rate * 100).toFixed(2)}% ${state === 'BAD' ? 'exceeds' : 'within'} threshold ${configRate}`;
+        const message = `${reserve} ${type} rate ${(rate * 100).toFixed(2)}% APY ${state === 'BAD' ? 'exceeds' : 'within'} threshold ${configRate}`;
         
         await this.triggerAlert('rate', `${reserve}:${type}`, state, message);
         break;

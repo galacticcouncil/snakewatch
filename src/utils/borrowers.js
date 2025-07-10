@@ -9,6 +9,7 @@ import {endpoints} from "../endpoints.js";
 import memoize from "memoizee";
 import {broadcastOnce} from "../discord.js";
 import {formatAccount, formatUsdNumber, loadCurrency} from "../currencies.js";
+import {getAlerts} from "./alerts.js";
 
 export default class Borrowers {
   constructor() {
@@ -144,6 +145,9 @@ export default class Borrowers {
           const health = `:${data.healthFactor < 1 ? 'broken_heart' : 'heart'}:**${(Math.floor(data.healthFactor * 100) / 100).toFixed(2)}**`;
           broadcastOnce(`:rotating_light: liquidation imminent for ${formatAccount(data.account)} position ${health} with **${formatUsdNumber(data.totalCollateralBase)}** collateral at risk `);
         }
+
+        const alerts = getAlerts();
+        await alerts.checkHealthFactor(data.account.toString(), data.healthFactor);
 
         this.health[contract].set(address, data);
         this.byHealth.clear();

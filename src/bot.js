@@ -16,6 +16,7 @@ import {initDiscord} from "./discord.js";
 import {rpc, sha, token, channel} from "./config.js";
 import {currenciesHandler} from "./currencies.js";
 import {endpoints} from "./endpoints.js";
+import {initAlerts} from "./utils/alerts.js";
 import process from "node:process";
 
 async function main() {
@@ -30,6 +31,8 @@ async function main() {
   } else {
     await initDiscord(token, channel);
   }
+
+  await initAlerts();
 
   await endpoints.start();
 

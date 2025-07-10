@@ -12,6 +12,7 @@ import {
 import ethers from "ethers";
 import Grafana from "./grafana.js";
 import { grafanaUrl, grafanaDatasource } from "../config.js";
+import {getAlerts} from "./alerts.js";
 
 export default class OraclePrices {
   constructor(priceDivergenceThreshold) {
@@ -281,6 +282,10 @@ export default class OraclePrices {
 
                 // Alert if divergence exceeds threshold
                 await this.checkAndAlertDivergence(baseAssetId, quoteAssetId, oraclePrice, spotPrice, divergence);
+                
+                // Check for price delta alerts
+                const alerts = getAlerts();
+                await alerts.checkPriceDelta(key, oraclePrice);
               }
             }
           } catch (e) {
@@ -295,6 +300,10 @@ export default class OraclePrices {
             timestamp: Number(timestamp),
             updated: Date.now()
           };
+          
+          // Check for price delta alerts even for simple prices
+          const alerts = getAlerts();
+          await alerts.checkPriceDelta(key, oraclePrice);
         }
 
         this.byDivergence.clear();

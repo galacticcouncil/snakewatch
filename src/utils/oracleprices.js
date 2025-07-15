@@ -134,6 +134,7 @@ export default class OraclePrices {
       const start = performance.now();
       try {
         const [pairs, values, timestamps, blockNumbers] = await grafana.query(query);
+        const now = Date.now();
 
         // Get highest block number from the results
         const blockNumber = Math.max(...blockNumbers.map(num => parseInt(num)));
@@ -282,10 +283,6 @@ export default class OraclePrices {
 
                 // Alert if divergence exceeds threshold
                 await this.checkAndAlertDivergence(baseAssetId, quoteAssetId, oraclePrice, spotPrice, divergence);
-                
-                // Check for price delta alerts
-                const alerts = getAlerts();
-                await alerts.checkPriceDelta(key, oraclePrice);
               }
             }
           } catch (e) {
@@ -300,10 +297,6 @@ export default class OraclePrices {
             timestamp: Number(timestamp),
             updated: Date.now()
           };
-          
-          // Check for price delta alerts even for simple prices
-          const alerts = getAlerts();
-          await alerts.checkPriceDelta(key, oraclePrice);
         }
 
         this.byDivergence.clear();
@@ -380,13 +373,23 @@ export default class OraclePrices {
             this.metrics.spot_price.set({asset_pair: key}, spotPrice);
             this.metrics.price_divergence.set({asset_pair: key, key}, divergence);
 
+            const updated = Date.now();
+
             // Update stored data
             this.prices[key] = {
               ...data,
               spotPrice,
               divergence,
-              updated: Date.now()
+              updated,
             };
+
+            try {
+              // Check for price delta alerts
+              const alerts = getAlerts();
+              await alerts.checkPriceDelta(key, spotPrice, updated);
+            } catch (e) {
+              console.error(`Failed to check price delta for ${key}:`, e);
+            }
 
             // Check if we need to alert on divergence
             await this.checkAndAlertDivergence(data.baseAssetId, data.quoteAssetId, data.oraclePrice, spotPrice, divergence);

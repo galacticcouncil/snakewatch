@@ -1,6 +1,6 @@
 import { metrics } from '../metrics.js';
 import { endpoints } from "../endpoints.js";
-import memoize from "memoizee";
+import { slackAlertWebhook, slackAlertHF, slackAlertRate, slackAlertPriceDelta } from '../config.js';
 
 class Alerts {
   constructor() {
@@ -12,7 +12,6 @@ class Alerts {
       priceDeltas: []
     };
     this.priceWindows = new Map();
-    this.webhookUrl = null;
     
     this.metrics = metrics.register('alerts', {
       active_alerts: {
@@ -61,24 +60,22 @@ class Alerts {
   }
 
   async loadConfiguration() {
-    try {
-      this.webhookUrl = process.env.ALERT_WEBHOOK_SLACK || null;
-      
-      if (process.env.ALERT_HF) {
-        this.alertConfigs.hf = JSON.parse(process.env.ALERT_HF);
+    try {      
+      if (slackAlertHF) {
+        this.alertConfigs.hf = JSON.parse(slackAlertHF);
       }
       
-      if (process.env.ALERT_RATE) {
-        this.alertConfigs.rate = JSON.parse(process.env.ALERT_RATE);
+      if (slackAlertRate) {
+        this.alertConfigs.rate = JSON.parse(slackAlertRate);
       }
       
-      if (process.env.ALERT_PRICE_DELTA) {
-        this.alertConfigs.priceDeltas = JSON.parse(process.env.ALERT_PRICE_DELTA);
+      if (slackAlertPriceDelta) {
+        this.alertConfigs.priceDeltas = JSON.parse(slackAlertPriceDelta);
         this.initializePriceWindows();
       }
       
       console.log('Alert configuration loaded:', {
-        webhook: !!this.webhookUrl,
+        webhook: !!slackAlertWebhook,
         hf: this.alertConfigs.hf.length,
         rate: this.alertConfigs.rate.length,
         priceDeltas: this.alertConfigs.priceDeltas.length
@@ -108,10 +105,10 @@ class Alerts {
   }
 
   async sendWebhook(message) {
-    if (!this.webhookUrl) return false;
+    if (!slackAlertWebhook) return false;
     
     try {
-      const response = await fetch(this.webhookUrl, {
+      const response = await fetch(slackAlertWebhook, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: message })
@@ -132,30 +129,36 @@ class Alerts {
     }
   }
 
-  async triggerAlert(type, key, state, message) {
+  async triggerAlert(type, key, state, message, canBeActive = true) {
     const alertKey = `${type}:${key}`;
     const isActive = this.activeAlerts.has(alertKey);
     
-    if (state === 'BAD' && !isActive) {
-      this.activeAlerts.set(alertKey, {
-        type,
-        key,
-        state,
-        message,
-        triggeredAt: Date.now()
-      });
+    if (state === 'BAD' && (!canBeActive || !isActive)) {
+      if (canBeActive) {
+        this.activeAlerts.set(alertKey, {
+          type,
+          key,
+          state,
+          message,
+          triggeredAt: Date.now()
+        });
+
+        this.metrics.active_alerts.set({ type }, this.getActiveAlertsCount(type));
+      }
       
-      this.metrics.active_alerts.set({ type }, this.getActiveAlertsCount(type));
       this.metrics.alert_triggers_total.inc({ type, state });
       
       await this.sendWebhook(`🚨 **ALERT TRIGGERED** - ${message}`);
       
       this.addToHistory(type, key, state, message);
       
-    } else if (state === 'GOOD' && isActive) {
-      this.activeAlerts.delete(alertKey);
+    } else if (state === 'GOOD' && (!canBeActive || isActive)) {
+      if (canBeActive) {
+        this.activeAlerts.delete(alertKey);
+        this.metrics.active_alerts.set({ type }, this.getActiveAlertsCount(type));
+      }
       
-      this.metrics.active_alerts.set({ type }, this.getActiveAlertsCount(type));
+      
       this.metrics.alert_triggers_total.inc({ type, state });
       
       await this.sendWebhook(`✅ **ALERT RESOLVED** - ${message}`);
@@ -189,7 +192,9 @@ class Alerts {
     for (const [configAccount, threshold] of this.alertConfigs.hf) {
       if (account === configAccount) {
         const state = healthFactor < threshold ? 'BAD' : 'GOOD';
-        const message = `Account ${account} health factor ${healthFactor.toFixed(3)} ${state === 'BAD' ? '<' : '>='} ${threshold}`;
+        const message = state === 'BAD'
+          ? `Your Health Factor of Your Supply&Borrow position on Hydration is below ${threshold} (currently ${healthFactor.toFixed(2)})`
+          : 'Your Healfh Factor of Your Supply&Borrow position on Hydration is SAFU'
         
         await this.triggerAlert('hf', account, state, message);
         break;
@@ -209,7 +214,7 @@ class Alerts {
           state = rate < threshold ? 'BAD' : 'GOOD';
         }
         
-        const message = `${reserve} ${type} rate ${(rate * 100).toFixed(2)}% APY ${state === 'BAD' ? 'exceeds' : 'within'} threshold ${configRate}`;
+        const message = `Interest rate for ${type}ing ${reserve} is now ${(rate * 100).toFixed(2)} %`
         
         await this.triggerAlert('rate', `${reserve}:${type}`, state, message);
         break;
@@ -217,16 +222,19 @@ class Alerts {
     }
   }
 
-  async checkPriceDelta(pair, currentPrice) {
+  async checkPriceDelta(pair, currentPrice, timestamp) {
+    if (!currentPrice) {
+      return;
+    }
+
     const windowData = this.priceWindows.get(pair);
     if (!windowData) return;
     
-    const now = Date.now();
     const { windowMs, prices } = windowData;
     
-    prices.push({ price: currentPrice, timestamp: now });
+    prices.push({ price: currentPrice, timestamp });
     
-    const cutoff = now - windowMs;
+    const cutoff = timestamp - windowMs;
     windowData.prices = prices.filter(p => p.timestamp >= cutoff);
     
     if (windowData.prices.length < 2) return;
@@ -239,13 +247,13 @@ class Alerts {
     
     const threshold = parseFloat(configPercentage.replace('%', '')) / 100;
     
-    if (priceChange > threshold && now - windowData.lastAlert > windowMs) {
-      const message = `${pair} price changed ${(priceChange * 100).toFixed(2)}% (${oldestPrice.toFixed(6)} → ${currentPrice.toFixed(6)}) in ${this.formatDuration(windowMs)}`;
+    if (priceChange > threshold && timestamp - windowData.lastAlert > windowMs) {
+      const message = `${pair} price changed over ${(priceChange * 100).toFixed(2)}% in last ${this.formatDuration(windowMs)} and its now ${currentPrice.toFixed(6)}`;
       
-      await this.triggerAlert('price_delta', pair, 'BAD', message);
+      await this.triggerAlert('price_delta', pair, 'BAD', message, false);
       
-      windowData.lastAlert = now;
-      windowData.prices = [{ price: currentPrice, timestamp: now }];
+      windowData.lastAlert = timestamp;
+      windowData.prices = [{ price: currentPrice, timestamp }];
     }
   }
 
@@ -255,10 +263,14 @@ class Alerts {
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
     
-    if (days > 0) return `${days}d`;
-    if (hours > 0) return `${hours}h`;
-    if (minutes > 0) return `${minutes}m`;
-    return `${seconds}s`;
+    if (days > 1) return `${days} days`;
+    if (days > 0) return `${days} day`;
+    if (hours > 1) return `${hours} hours`;
+    if (hours > 0) return `${hours} hour`;
+    if (minutes > 1) return `${minutes} minutes`;
+    if (minutes > 0) return `${minutes} minute`;
+    if (seconds > 1) return `${seconds} seconds`;
+    return `${seconds} second`;
   }
 }
 

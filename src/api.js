@@ -1,6 +1,6 @@
 import {ApiPromise, WsProvider} from "@polkadot/api";
 import {PoolService, TradeRouter} from "@galacticcouncil/sdk";
-
+import { EvmClient } from "@galacticcouncil/sdk";
 
 let initialized = false;
 let _api;
@@ -11,7 +11,8 @@ export async function initApi(rpc) {
   console.warn = () => {};
   provider = new WsProvider(rpc);
   _api = await ApiPromise.create({provider});
-  const poolService = new PoolService(_api);
+  const evm = new EvmClient(_api);
+  const poolService = new PoolService(_api, evm);
   _sdk = new TradeRouter(poolService);
   initialized = true;
   const version = await _api.query.system.lastRuntimeUpgrade();

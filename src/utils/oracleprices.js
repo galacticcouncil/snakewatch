@@ -112,24 +112,23 @@ export default class OraclePrices {
       console.log('loading oracle prices from grafana');
       const grafana = new Grafana(grafanaUrl, grafanaDatasource);
 
-      const query = `SELECT 
-        args->>'key' AS pair,
-        (args->>'value')::numeric / 10^8 AS latest_value,
-        to_timestamp((args->>'timestamp')::bigint) AS latest_timestamp,
-        block_number AS latest_block_number
-      FROM 
-        logs AS l1
-      WHERE 
-        event_name = 'OracleUpdate'
-        AND block_number = (
-          SELECT MAX(block_number)
-          FROM logs AS l2
-          WHERE 
-            l2.event_name = 'OracleUpdate'
-            AND l2.args->>'key' = l1.args->>'key'
-        )
-      ORDER BY 
-        pair`;
+      const query = `SELECT
+                         args->>'key' AS pair,
+                         (args->>'value')::numeric / 10^8 AS latest_value,
+                         to_timestamp((args->>'timestamp')::bigint) AS latest_timestamp,
+                         l.block_number AS latest_block_number
+                     FROM logs l
+                         INNER JOIN (
+                         SELECT
+                         args->>'key' as key,
+                         MAX(block_number) as max_block
+                         FROM logs
+                         WHERE event_name = 'OracleUpdate'
+                         GROUP BY args->>'key'
+                         ) latest ON l.args->>'key' = latest.key
+                         AND l.block_number = latest.max_block
+                     WHERE l.event_name = 'OracleUpdate'
+                     ORDER BY pair;`;
 
       const start = performance.now();
       try {

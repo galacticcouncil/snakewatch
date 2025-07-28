@@ -1,12 +1,13 @@
 import { metrics } from '../metrics.js';
 import { endpoints } from "../endpoints.js";
-import { slackAlertWebhook, slackAlertHF, slackAlertRate, slackAlertPriceDelta } from '../config.js';
+import { slackAlertWebhooks, slackAlertHF, slackAlertRate, slackAlertPriceDelta } from '../config.js';
 
 class Alerts {
   constructor() {
     this.activeAlerts = new Map();
     this.alertHistory = [];
     this.alertConfigs = {
+      webhooks: [],
       hf: [],
       rate: [],
       priceDeltas: []
@@ -61,6 +62,10 @@ class Alerts {
 
   async loadConfiguration() {
     try {      
+      if (slackAlertWebhooks) {
+        this.alertConfigs.webhooks = JSON.parse(slackAlertWebhooks);
+      }
+
       if (slackAlertHF) {
         this.alertConfigs.hf = JSON.parse(slackAlertHF);
       }
@@ -75,7 +80,7 @@ class Alerts {
       }
       
       console.log('Alert configuration loaded:', {
-        webhook: !!slackAlertWebhook,
+        webhook: this.alertConfigs.webhooks.length,
         hf: this.alertConfigs.hf.length,
         rate: this.alertConfigs.rate.length,
         priceDeltas: this.alertConfigs.priceDeltas.length
@@ -104,18 +109,26 @@ class Alerts {
     return parseInt(value) * multipliers[unit];
   }
 
-  async sendWebhook(message) {
-    if (!slackAlertWebhook) return false;
-    
+  async sendWebhooks(message) {
+    const results = await Promise.all(this.alertConfigs.webhooks.map(webhookUrl => this.sendWebhook(webhookUrl, message)));
+    const success = results.every(result => !!result);
+
+    if (success) {
+      this.metrics.webhook_notifications_total.inc({ success: 'true' });
+    } else {
+      this.metrics.webhook_notifications_total.inc({ success: 'false' });
+    }
+  }
+
+  async sendWebhook(webhookUrl, message) {
     try {
-      const response = await fetch(slackAlertWebhook, {
+      const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: message })
       });
       
       const success = response.ok;
-      this.metrics.webhook_notifications_total.inc({ success: success.toString() });
       
       if (!success) {
         console.error('Webhook notification failed:', response.status, response.statusText);
@@ -124,7 +137,7 @@ class Alerts {
       return success;
     } catch (error) {
       console.error('Failed to send webhook notification:', error);
-      this.metrics.webhook_notifications_total.inc({ success: 'false' });
+      
       return false;
     }
   }
@@ -148,7 +161,7 @@ class Alerts {
       
       this.metrics.alert_triggers_total.inc({ type, state });
       
-      await this.sendWebhook(`🚨 **ALERT TRIGGERED** - ${message}`);
+      await this.sendWebhooks(`🚨 **ALERT TRIGGERED** - ${message}`);
       
       this.addToHistory(type, key, state, message);
       
@@ -161,7 +174,7 @@ class Alerts {
       
       this.metrics.alert_triggers_total.inc({ type, state });
       
-      await this.sendWebhook(`✅ **ALERT RESOLVED** - ${message}`);
+      await this.sendWebhooks(`✅ **ALERT RESOLVED** - ${message}`);
       
       this.addToHistory(type, key, state, message);
     }
@@ -220,6 +233,10 @@ class Alerts {
         break;
       }
     }
+  }
+
+  getPricePairs() {
+    return this.alertConfigs.priceDeltas.map(([pair]) => pair);
   }
 
   async checkPriceDelta(pair, currentPrice, timestamp) {

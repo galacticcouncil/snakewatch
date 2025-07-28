@@ -137,6 +137,7 @@ export default class OraclePrices {
 
         // Get highest block number from the results
         const blockNumber = Math.max(...blockNumbers.map(num => parseInt(num)));
+        const alerts = getAlerts();        
 
         // Process each oracle price
         for (let i = 0; i < pairs.length; i++) {
@@ -183,6 +184,8 @@ export default class OraclePrices {
                         baseAssetId,
                         quoteAssetId
                       };
+
+                      await this.checkPriceDelta(alerts, key, value, timestamp);
 
                       // Alert if divergence exceeds threshold
                       await this.checkAndAlertDivergence(baseAssetId, quoteAssetId, value, spotPrice, divergence);
@@ -358,6 +361,9 @@ export default class OraclePrices {
 
     const start = performance.now();
     const keys = Object.keys(this.prices);
+    const alerts = getAlerts();
+
+    const extraKeys = alerts.getPricePairs().filter(key => !keys.includes(key));
 
     // Refresh all stored price pairs
     for (const key of keys) {
@@ -382,13 +388,7 @@ export default class OraclePrices {
               updated,
             };
 
-            try {
-              // Check for price delta alerts
-              const alerts = getAlerts();
-              await alerts.checkPriceDelta(key, spotPrice, updated);
-            } catch (e) {
-              console.error(`Failed to check price delta for ${key}:`, e);
-            }
+            await this.checkPriceDelta(alerts, key, spotPrice, updated);
 
             // Check if we need to alert on divergence
             await this.checkAndAlertDivergence(data.baseAssetId, data.quoteAssetId, data.oraclePrice, spotPrice, divergence);
@@ -399,11 +399,37 @@ export default class OraclePrices {
       }
     }
 
+    // Additional checks for price deltas alerts
+    for (const key of extraKeys) {
+      try {
+        const [baseAsset, quoteAsset] = key.split('/');
+        const baseAssetId = this.getAssetIdFromSymbol(baseAsset);
+        const quoteAssetId = this.getAssetIdFromSymbol(quoteAsset);
+
+        const spotPrice = await this.getSpotPrice(baseAssetId, quoteAssetId);
+
+        if (spotPrice !== null) {
+          const updated = Date.now();
+          await this.checkPriceDelta(alerts, key, spotPrice, updated);
+        }
+      } catch {
+        console.error(`Failed to get spot price for ${key}:`, e);
+      }
+    }
+
     this.lastGlobalUpdate = blockNumber;
     this.metrics.last_global_update_block.set(blockNumber);
     this.metrics.last_update_block.set(blockNumber);
     this.byDivergence.clear();
 
     console.log(`updated prices of ${keys.length} pairs in ${(performance.now() - start).toFixed(2)}ms`);
+  }
+
+  async checkPriceDelta(alerts, key, spotPrice, updated) {
+    try {
+      await alerts.checkPriceDelta(key, spotPrice, updated);
+    } catch (e) {
+      console.error(`Failed to check price delta for ${key}:`, e);
+    }
   }
 }

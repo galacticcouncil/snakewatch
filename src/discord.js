@@ -26,7 +26,14 @@ export function client() {
   return _client;
 }
 
+function exclude(message) {
+  return message.includes("12vQsukHqL9hM3AuRZdZ8SyKgKSvYcFPuaUYg35nydPCPSkU");
+}
+
 export function broadcast(message) {
+  if (exclude(message)) {
+    return;
+  }
   console.log(toAnsi(message));
   if (_client) {
     const channel = client().channels.cache.get(_channel);

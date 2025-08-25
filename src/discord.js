@@ -1,6 +1,7 @@
 import {Client, GatewayIntentBits} from 'discord.js';
 import markdownToAnsi from 'markdown-to-ansi'
 import memoize from "memoizee";
+import {mute} from "./config.js";
 
 let _client = null;
 let _channel = null;
@@ -27,7 +28,12 @@ export function client() {
 }
 
 function exclude(message) {
-  return message.includes("12vQsukHqL9hM3AuRZdZ8SyKgKSvYcFPuaUYg35nydPCPSkU");
+  for (const word of mute) {
+    if (message.includes(word)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 export function broadcast(message) {

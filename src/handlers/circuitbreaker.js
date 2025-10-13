@@ -11,10 +11,11 @@ async function assetLockdownHandler({event, blockNumber}) {
   const blocksRemaining = until.toNumber() - blockNumber;
 
   const asset = {currencyId: assetId, amount: 0};
-  const message = `🔒 **Circuit Breaker Triggered**: Asset **${formatAmount(asset).split(' ')[0]}** locked until block #${until} (~${blocksRemaining} blocks remaining) cc @dmoka`;
+  const baseMessage = `🔒 **Circuit Breaker Triggered**: Asset **${formatAmount(asset).split(' ')[0]}** locked until block #${until} (~${blocksRemaining} blocks remaining)`;
 
-  broadcast(message);
+  broadcast(baseMessage);
 
   const alerts = getAlerts();
-  await alerts.sendWebhook(message);
+  const webhookMessage = `${baseMessage} cc <@426092377288081410> <@&1001116487907545128>`;
+  await alerts.sendWebhook(webhookMessage);
 }

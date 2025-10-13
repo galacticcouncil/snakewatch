@@ -17,8 +17,8 @@ describe("CircuitBreaker Events", () => {
     events.on('circuitBreaker', 'AssetLockdown', ({event: {section, method, data}}) => {
       expect(section).toBe('circuitBreaker');
       expect(method).toBe('AssetLockdown');
-      expect(data.assetId).toBeDefined();
-      expect(data.until).toBeDefined();
+      expect(data.assetId.toNumber()).toBe(19);
+      expect(data.until.toNumber()).toBe(9619501);
       console.log(`Asset ${data.assetId} locked until block ${data.until}`);
     });
     const count = await events.emitFromBlock(9605101);

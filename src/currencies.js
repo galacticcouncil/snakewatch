@@ -115,7 +115,8 @@ export const formatUsdValue = value => {
   let amount = Number(value) / 10 ** (currencies[usdCurrencyId].decimals || 12);
   amount = amount > 1 ? Math.round(amount) : amount;
   const symbol = currencies[usdCurrencyId].symbol || currencies[usdCurrencyId].name || 'USD';
-  return ` *~ ${new Intl.NumberFormat('en-US', {maximumSignificantDigits: amount < 1 ? 1 : 4, maximumFractionDigits: 2}).format(amount).replace(/,/g, " ")} ${symbol}*`;
+  amount = new Intl.NumberFormat('en-US', {maximumSignificantDigits: amount < 1 ? 1 : 4, maximumFractionDigits: 2}).format(amount);
+  return symbol === 'HOLLAR' ? ` *~ Ħ${amount}*` : ` *~ ${amount.replace(/,/g, " ")} ${symbol}*`;
 };
 export const formatUsdNumber = amount => new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD'}).format(amount);
 export const formatAsset = async asset => `**${formatAmount(asset)}**${asset.currencyId.toString() !== usdCurrencyId ? formatUsdValue(await usdValue(asset)) : ''}`;

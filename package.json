@@ -4,7 +4,7 @@
   "description": "",
   "main": "src/bot.js",
   "scripts": {
-    "test": "node --experimental-vm-modules ./node_modules/.bin/jest --detectOpenHandles",
+    "test": "node --experimental-vm-modules ./node_modules/.bin/jest --forceExit",
     "start": "node src/bot.js",
     "start:rococo": "RPC_URL=wss://hydradx-rococo-rpc.play.hydration.cloud npm run start",
     "start:mainnet": "USD_TOKEN=2 RPC_URL=wss://rpc.basilisk.cloud npm run start",

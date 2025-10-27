@@ -18,6 +18,7 @@ export const timeout = Number(process.env.TIMEOUT) || 120;
 export const mute = process.env.MUTE?.split(",") || ['BLAST'];
 
 export const slackAlertWebhook = process.env.SLACK_ALERT_WEBHOOK;
+export const discordWebhook = process.env.DISCORD_WEBHOOK;
 export const slackAlertHF = process.env.ALERT_HF;
 export const slackAlertRate = process.env.ALERT_RATE;
 export const slackAlertPriceDelta = process.env.ALERT_PRICE_DELTA;

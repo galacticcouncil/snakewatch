@@ -10,8 +10,7 @@ async function assetLockdownHandler({event, blockNumber}) {
   const {assetId, until} = event.data;
   const blocksRemaining = until.toNumber() - blockNumber;
 
-  const asset = {currencyId: assetId, amount: 0};
-  const baseMessage = `🔒 **Circuit Breaker Triggered**: Asset **${formatAmount(asset).split(' ')[0]}** locked until block #${until} (~${blocksRemaining} blocks remaining)`;
+  const baseMessage = `🔒 **Circuit Breaker Triggered**: Asset **${assetId}** locked until block #${until} (~${blocksRemaining} blocks remaining)`;
 
   broadcast(baseMessage);
 

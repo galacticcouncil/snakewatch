@@ -1,6 +1,6 @@
 import { metrics } from '../metrics.js';
 import { endpoints } from "../endpoints.js";
-import { slackAlertWebhook, slackAlertHF, slackAlertRate, slackAlertPriceDelta } from '../config.js';
+import { slackAlertWebhook, discordWebhook, slackAlertHF, slackAlertRate, slackAlertPriceDelta } from '../config.js';
 
 class Alerts {
   constructor() {
@@ -75,7 +75,8 @@ class Alerts {
       }
       
       console.log('Alert configuration loaded:', {
-        webhook: !!slackAlertWebhook,
+        slackWebhook: !!slackAlertWebhook,
+        discordWebhook: !!discordWebhook,
         hf: this.alertConfigs.hf.length,
         rate: this.alertConfigs.rate.length,
         priceDeltas: this.alertConfigs.priceDeltas.length
@@ -105,28 +106,59 @@ class Alerts {
   }
 
   async sendWebhook(message) {
-    if (!slackAlertWebhook) return false;
-    
-    try {
-      const response = await fetch(slackAlertWebhook, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: message })
-      });
-      
-      const success = response.ok;
-      this.metrics.webhook_notifications_total.inc({ success: success.toString() });
-      
-      if (!success) {
-        console.error('Webhook notification failed:', response.status, response.statusText);
+    if (!slackAlertWebhook && !discordWebhook) return false;
+
+    const results = [];
+
+    // Send to Slack
+    if (slackAlertWebhook) {
+      try {
+        const response = await fetch(slackAlertWebhook, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: message })
+        });
+
+        const success = response.ok;
+        this.metrics.webhook_notifications_total.inc({ success: success.toString() });
+
+        if (!success) {
+          console.error('Slack webhook notification failed:', response.status, response.statusText);
+        }
+
+        results.push(success);
+      } catch (error) {
+        console.error('Failed to send Slack webhook notification:', error);
+        this.metrics.webhook_notifications_total.inc({ success: 'false' });
+        results.push(false);
       }
-      
-      return success;
-    } catch (error) {
-      console.error('Failed to send webhook notification:', error);
-      this.metrics.webhook_notifications_total.inc({ success: 'false' });
-      return false;
     }
+
+    // Send to Discord
+    if (discordWebhook) {
+      try {
+        const response = await fetch(discordWebhook, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: message })
+        });
+
+        const success = response.ok;
+        this.metrics.webhook_notifications_total.inc({ success: success.toString() });
+
+        if (!success) {
+          console.error('Discord webhook notification failed:', response.status, response.statusText);
+        }
+
+        results.push(success);
+      } catch (error) {
+        console.error('Failed to send Discord webhook notification:', error);
+        this.metrics.webhook_notifications_total.inc({ success: 'false' });
+        results.push(false);
+      }
+    }
+
+    return results.some(r => r);
   }
 
   async triggerAlert(type, key, state, message, canBeActive = true) {

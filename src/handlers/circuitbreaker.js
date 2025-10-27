@@ -1,5 +1,5 @@
 import {broadcast} from "../discord.js";
-import {formatAmount} from "../currencies.js";
+import {formatAmount, loadCurrency, symbol} from "../currencies.js";
 import {getAlerts} from "../utils/alerts.js";
 
 export default function circuitBreakerHandler(events) {
@@ -10,7 +10,10 @@ async function assetLockdownHandler({event, blockNumber}) {
   const {assetId, until} = event.data;
   const blocksRemaining = until.toNumber() - blockNumber;
 
-  const baseMessage = `🔒 **Circuit Breaker Triggered**: Asset **${assetId}** locked until block #${until} (~${blocksRemaining} blocks remaining)`;
+  await loadCurrency(assetId);
+  const assetSymbol = symbol(assetId);
+
+  const baseMessage = `🔒 **Circuit Breaker Triggered**: Asset **${assetSymbol}** (${assetId}) locked until block #${until} (~${blocksRemaining} blocks remaining)`;
 
   broadcast(baseMessage);
 

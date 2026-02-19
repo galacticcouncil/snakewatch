@@ -11,11 +11,14 @@ import ethers from "ethers";
 
 const borrowers = new Borrowers();
 
+const notDusted = ({siblings}) => siblings.find(({section, method}) =>
+  section === 'duster' && method === 'Dusted') === undefined;
+
 export default function borrowingHandler(events) {
   borrowers.init();
   events
     .onLog('Supply', poolAbi, borrowers.handler(supply), notInRouter)
-    .onLog('Withdraw', poolAbi, borrowers.handler(withdraw), notInRouter)
+    .onLog('Withdraw', poolAbi, borrowers.handler(withdraw), e => notInRouter(e) && notDusted(e))
     .onLog('Borrow', poolAbi, borrowers.handler(borrow))
     .onLog('Repay', poolAbi, borrowers.handler(repay))
     .onLog('LiquidationCall', poolAbi, borrowers.handler(liquidationCall))

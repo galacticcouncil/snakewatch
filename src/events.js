@@ -52,8 +52,8 @@ export class Events {
       clearTimeout(watchdogTimer);
 
       watchdogTimer = setTimeout(() => {
-        console.error(`no block received for ${timeout} seconds`);
-        process.exit(1);
+        console.error(`no block received for ${timeout} seconds, exiting`);
+        process.kill(process.pid, 'SIGTERM');
       }, timeout * 1000);
     };
 

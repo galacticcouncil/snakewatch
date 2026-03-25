@@ -2,6 +2,7 @@ import {api} from './api.js';
 import ethers from "ethers";
 import {delay, timeout} from "./config.js";
 import memoize from "memoizee";
+import process from "node:process";
 
 export class Events {
   listeners = [];
@@ -51,7 +52,8 @@ export class Events {
       clearTimeout(watchdogTimer);
 
       watchdogTimer = setTimeout(() => {
-        throw new Error(`no block received for ${timeout} seconds`);
+        console.error(`no block received for ${timeout} seconds`);
+        process.exit(1);
       }, timeout * 1000);
     };
 

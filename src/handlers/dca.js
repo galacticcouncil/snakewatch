@@ -6,6 +6,7 @@ export default function otcHandler(events) {
   events
     .on('dca', 'TradeExecuted', tradeExecuted)
     .on('dca', 'Terminated', terminatedHandler)
+    .on('dca', 'Completed', terminatedHandler)
 }
 
 export const notInDca = ({siblings}) => siblings.find(({method}) => ['ExecutionStarted'].includes(method)) === undefined;

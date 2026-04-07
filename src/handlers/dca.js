@@ -14,6 +14,16 @@ export const notInDca = ({siblings}) => siblings.find(({method}) => ['ExecutionS
 const window = 50;
 let buffer = [];
 
+function flushStale(blockNumber) {
+  const ids = new Set(buffer.map(({id}) => id));
+  for (const id of ids) {
+    const latest = buffer.filter(e => e.id === id).reduce((max, e) => Math.max(max, e.nextBlock || e.blockNumber), 0);
+    if (blockNumber - latest > window) {
+      broadcastBuffer(id);
+    }
+  }
+}
+
 async function tradeExecuted({event, siblings, blockNumber}) {
   const {who} = event.data;
   const scheduleId = event.data.id.toNumber();
@@ -42,6 +52,7 @@ async function tradeExecuted({event, siblings, blockNumber}) {
       return swapHandler({who, ...trade.data});
     }
   }
+  flushStale(blockNumber);
 }
 
 function terminatedHandler({event}) {

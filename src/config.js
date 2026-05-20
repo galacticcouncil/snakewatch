@@ -1,7 +1,9 @@
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-export const rpc = process.env.RPC_URL || 'wss://localhost:9988';
+const rpcUrls = (process.env.RPC_URL || 'wss://localhost:9988')
+  .split(',').map(s => s.trim()).filter(Boolean);
+export const rpc = rpcUrls[Math.floor(Math.random() * rpcUrls.length)];
 export const ahRpc = process.env.AH_RPC_URL || 'wss://polkadot-asset-hub-rpc.polkadot.io';
 export const delay = Number(process.env.DELAY || 4);
 export const token = process.env.DISCORD_TOKEN;

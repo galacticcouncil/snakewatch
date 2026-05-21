@@ -19,11 +19,17 @@ async function placedHandler({event, siblings}) {
 
 async function filledHandler({event, siblings}) {
   const {who} = event.data;
+  const whoStr = who.toString();
   const [b, a] = siblings
     .slice(0, siblings.indexOf(event))
     .reverse()
-    .filter(({method}) => method === 'Transfer')
+    .filter(({method, data}) => method === 'Transfer'
+      && (data.from?.toString() === whoStr || data.to?.toString() === whoStr))
     .map(({data}) => ({currencyId: 0, ...data}));
+  if (!a || !b) {
+    console.warn('otc filled: could not find both swap legs for', whoStr);
+    return;
+  }
   const message = `${formatAccount(who)} swapped **${formatAmount(a)}** for **${formatAmount(b)}** OTC`;
   broadcast(message);
 }

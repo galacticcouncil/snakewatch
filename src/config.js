@@ -1,7 +1,9 @@
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-export const rpc = process.env.RPC_URL || 'wss://localhost:9988';
+const rpcUrls = (process.env.RPC_URL || 'wss://localhost:9988')
+  .split(',').map(s => s.trim()).filter(Boolean);
+export const rpc = rpcUrls[Math.floor(Math.random() * rpcUrls.length)];
 export const ahRpc = process.env.AH_RPC_URL || 'wss://polkadot-asset-hub-rpc.polkadot.io';
 export const delay = Number(process.env.DELAY || 4);
 export const token = process.env.DISCORD_TOKEN;
@@ -15,11 +17,13 @@ export const port = process.env.PORT || 3000;
 export const liquidationAlert = Number(process.env.LIQ_ALERT);
 export const priceDivergenceThreshold = Number(process.env.PRICE_DIVERGENCE); // e.g 0.03 = 3%
 export const timeout = Number(process.env.TIMEOUT) || 120;
+export const mute = process.env.MUTE?.split(",") || ['BLAST'];
 
 export const slackAlertWebhook = process.env.SLACK_ALERT_WEBHOOK;
 // JSON array of webhook URLs; falls back to wrapping the legacy single webhook
 export const slackAlertWebhooks = process.env.SLACK_ALERT_WEBHOOKS
   || (slackAlertWebhook ? JSON.stringify([slackAlertWebhook]) : undefined);
+export const discordWebhook = process.env.DISCORD_WEBHOOK;
 export const slackAlertHF = process.env.ALERT_HF;
 export const slackAlertRate = process.env.ALERT_RATE;
 export const slackAlertPriceDelta = process.env.ALERT_PRICE_DELTA;

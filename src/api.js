@@ -7,10 +7,24 @@ let _api;
 let _sdk;
 let provider;
 
+const CONNECT_TIMEOUT_MS = Number(process.env.RPC_CONNECT_TIMEOUT_MS) || 30_000;
+
 export async function initApi(rpc) {
   console.warn = () => {};
   provider = new WsProvider(rpc);
-  _api = await ApiPromise.create({provider});
+  const ready = ApiPromise.create({provider});
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error(`rpc connect timeout after ${CONNECT_TIMEOUT_MS}ms: ${rpc}`)),
+      CONNECT_TIMEOUT_MS,
+    );
+  });
+  try {
+    _api = await Promise.race([ready, timeout]);
+  } finally {
+    clearTimeout(timer);
+  }
   const evm = new EvmClient(_api);
   const poolService = new PoolService(_api, evm);
   _sdk = new TradeRouter(poolService);

@@ -3,6 +3,7 @@ import {
   formatAccount,
   formatAmount, formatUsdValue,
   isWhale,
+  loadCurrency,
   recordPrice,
   usdValue
 } from "../currencies.js";
@@ -28,6 +29,8 @@ async function buyHandler({event}) {
 }
 
 export async function swapHandler({who, assetIn, assetOut, amountIn, amountOut}, action = `swapped`) {
+  // aTokens only move via evm.Log, so currenciesHandler never loads them; pull them in here
+  await Promise.all([assetIn, assetOut].map(id => loadCurrency(id)));
   const sold = {currencyId: assetIn, amount: amountIn};
   const bought = {currencyId: assetOut, amount: amountOut};
   recordPrice(sold, bought);

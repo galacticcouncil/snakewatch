@@ -84,6 +84,7 @@ export const hdx = amount => ({currencyId: 0, amount});
 
 export const symbol = currencyId => {
   const currency = currencies[currencyId];
+  if (!currency) return currencyId.toString();
   if (currency.assetType === 'Bond') {
     return Number(currencyId) === 1000010 ? 'HDXb₁' :
            Number(currencyId) === 1000013 ? 'HDXb₂' :
@@ -93,6 +94,7 @@ export const symbol = currencyId => {
 }
 export const decimals = currencyId => {
   const currency = currencies[currencyId];
+  if (!currency) return 0;
   if (currency.assetType === 'StableSwap') return 18;
   if (currency.parent) return decimals(currency.parent);
   return currency.decimals || 1;
@@ -115,7 +117,8 @@ export const formatUsdValue = value => {
   let amount = Number(value) / 10 ** (currencies[usdCurrencyId].decimals || 12);
   amount = amount > 1 ? Math.round(amount) : amount;
   const symbol = currencies[usdCurrencyId].symbol || currencies[usdCurrencyId].name || 'USD';
-  return ` *~ ${new Intl.NumberFormat('en-US', {maximumSignificantDigits: amount < 1 ? 1 : 4, maximumFractionDigits: 2}).format(amount).replace(/,/g, " ")} ${symbol}*`;
+  amount = new Intl.NumberFormat('en-US', {maximumSignificantDigits: amount < 1 ? 1 : 4, maximumFractionDigits: 2}).format(amount);
+  return symbol === 'HOLLAR' ? ` *~ Ħ${amount}*` : ` *~ ${amount.replace(/,/g, " ")} ${symbol}*`;
 };
 export const formatUsdNumber = amount => new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD'}).format(amount);
 export const formatAsset = async asset => `**${formatAmount(asset)}**${asset.currencyId.toString() !== usdCurrencyId ? formatUsdValue(await usdValue(asset)) : ''}`;

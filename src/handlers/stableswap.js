@@ -3,11 +3,12 @@ import {sellHandler, buyHandler} from "./omnipool.js";
 import {formatAccount, formatAmount, formatUsdValue, isWhale, usdValue} from "../currencies.js";
 import {broadcast} from "../discord.js";
 import {notInRouter} from "./router.js";
+import {isHsm} from "./hsm.js";
 
 export default function stableswapHandler(events) {
   events
     .onFilter('stableswap', 'SellExecuted', notInRouter, sellHandler)
-    .onFilter('stableswap', 'BuyExecuted', notInRouter, buyHandler)
+    .onFilter('stableswap', 'BuyExecuted', e => notInRouter(e) && !isHsm(e), buyHandler)
     .onFilter('stableswap', 'LiquidityAdded', notInRouter, liquidityAddedHandler)
     .onFilter('stableswap', 'LiquidityRemoved', notInRouter, liquidityRemovedHandler);
 }

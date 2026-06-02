@@ -19,5 +19,5 @@ async function assetLockdownHandler({event, blockNumber}) {
 
   const alerts = getAlerts();
   const webhookMessage = `${baseMessage} cc <@426092377288081410> <@&1001116487907545128>`;
-  await alerts.sendWebhook(webhookMessage);
+  await alerts.sendWebhooks(webhookMessage);
 }

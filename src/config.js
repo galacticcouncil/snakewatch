@@ -20,6 +20,9 @@ export const timeout = Number(process.env.TIMEOUT) || 120;
 export const mute = process.env.MUTE?.split(",") || ['BLAST'];
 
 export const slackAlertWebhook = process.env.SLACK_ALERT_WEBHOOK;
+// JSON array of webhook URLs; falls back to wrapping the legacy single webhook
+export const slackAlertWebhooks = process.env.SLACK_ALERT_WEBHOOKS
+  || (slackAlertWebhook ? JSON.stringify([slackAlertWebhook]) : undefined);
 export const discordWebhook = process.env.DISCORD_WEBHOOK;
 export const slackAlertHF = process.env.ALERT_HF;
 export const slackAlertRate = process.env.ALERT_RATE;

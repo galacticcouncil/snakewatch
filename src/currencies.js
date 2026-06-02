@@ -84,6 +84,7 @@ export const hdx = amount => ({currencyId: 0, amount});
 
 export const symbol = currencyId => {
   const currency = currencies[currencyId];
+  if (!currency) return currencyId.toString();
   if (currency.assetType === 'Bond') {
     return Number(currencyId) === 1000010 ? 'HDXb₁' :
            Number(currencyId) === 1000013 ? 'HDXb₂' :
@@ -93,6 +94,7 @@ export const symbol = currencyId => {
 }
 export const decimals = currencyId => {
   const currency = currencies[currencyId];
+  if (!currency) return 0;
   if (currency.assetType === 'StableSwap') return 18;
   if (currency.parent) return decimals(currency.parent);
   return currency.decimals || 1;

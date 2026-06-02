@@ -412,7 +412,7 @@ export default class OraclePrices {
           const updated = Date.now();
           await this.checkPriceDelta(alerts, key, spotPrice, updated);
         }
-      } catch {
+      } catch (e) {
         console.error(`Failed to get spot price for ${key}:`, e);
       }
     }

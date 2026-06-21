@@ -1,6 +1,6 @@
 # Alerts System Configuration
 
-The SnakeWatch alerts system provides real-time monitoring and Slack notifications for various blockchain events. It supports three types of alerts: health factor monitoring, interest rate monitoring, and price delta monitoring.
+The SnakeWatch alerts system provides real-time monitoring and Slack notifications for various blockchain events. It supports several types of alerts: health factor monitoring, interest rate monitoring, price delta monitoring, and contract deployment monitoring.
 
 ## Quick Start
 
@@ -66,6 +66,18 @@ ALERT_PRICE_DELTA='[["GDOT/DOT", "5%", "10m"], ["GDOT/USDT", "10%", "1m"], ["DOT
 - **🚨 TRIGGERED**: When price changes more than specified percentage within time window
 - **Auto-reset**: Time window resets after each trigger (no explicit resolution notification)
 
+### ALERT_DEPLOYMENT (Contract Deployment Monitoring)
+**Type:** boolean toggle (`1` / `true` / `yes` / `on` to enable; unset or anything else disables)
+**Purpose:** Notify on every EVM contract deployment (`evm.Created`) on the chain
+
+```bash
+ALERT_DEPLOYMENT=true
+```
+
+**Alert Behavior:**
+- **🚨 TRIGGERED**: Fires once per deployed contract with its address and block number
+- No resolution state — each deployment is a standalone notification
+
 ## Complete Configuration Example
 
 ```bash
@@ -113,6 +125,11 @@ ALERT_PRICE_DELTA='[
 ### Price Delta Alerts
 ```
 🚨 **ALERT TRIGGERED** - GDOT/DOT price changed 6.00% (1.000000 → 1.060000) in 10m
+```
+
+### Contract Deployment Alerts
+```
+🚨 **ALERT TRIGGERED** - New contract deployed at 0x1234...abcd in block #4776718
 ```
 
 ## Monitoring & Management

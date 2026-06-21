@@ -1,6 +1,6 @@
 import { metrics } from '../metrics.js';
 import { endpoints } from "../endpoints.js";
-import { slackAlertWebhooks, discordWebhook, slackAlertHF, slackAlertRate, slackAlertPriceDelta } from '../config.js';
+import { slackAlertWebhooks, discordWebhook, slackAlertHF, slackAlertRate, slackAlertPriceDelta, alertDeployment } from '../config.js';
 
 class Alerts {
   constructor() {
@@ -10,7 +10,8 @@ class Alerts {
       webhooks: [],
       hf: [],
       rate: [],
-      priceDeltas: []
+      priceDeltas: [],
+      deployment: false
     };
     this.priceWindows = new Map();
 
@@ -79,12 +80,17 @@ class Alerts {
         this.initializePriceWindows();
       }
 
+      if (alertDeployment !== undefined) {
+        this.alertConfigs.deployment = /^(1|true|yes|on)$/i.test(String(alertDeployment).trim());
+      }
+
       console.log('Alert configuration loaded:', {
         webhooks: this.alertConfigs.webhooks.length,
         discordWebhook: !!discordWebhook,
         hf: this.alertConfigs.hf.length,
         rate: this.alertConfigs.rate.length,
-        priceDeltas: this.alertConfigs.priceDeltas.length
+        priceDeltas: this.alertConfigs.priceDeltas.length,
+        deployment: this.alertConfigs.deployment
       });
     } catch (error) {
       console.error('Failed to load alert configuration:', error);
@@ -256,6 +262,15 @@ class Alerts {
         break;
       }
     }
+  }
+
+  async checkDeployment(address, blockNumber) {
+    if (!this.alertConfigs.deployment) return;
+
+    const message = `New contract deployed at ${address}${blockNumber ? ` in block #${blockNumber}` : ''}`;
+
+    // fire-and-forget notification: every deployment notifies, no active state to resolve
+    await this.triggerAlert('deployment', address, 'BAD', message, false);
   }
 
   getPricePairs() {

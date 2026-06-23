@@ -81,7 +81,9 @@ ALERT_DEPLOYMENT=true
 **Detection:** Rather than relying on `evm.Created` (which Frontier only emits for top-level
 deploys), the watcher inspects every `ethereum.Executed` and flags any touched address whose
 bytecode went from empty to non-empty in that block. This catches factory / CREATE2
-deployments too. When disabled, no extra chain reads are performed.
+deployments too. At init it preseeds the set of already-deployed contracts (from
+`evm.accountCodes`) so calls to existing contracts are skipped without a chain read. When the
+alert is disabled the handler is not registered at all — zero overhead.
 
 ## Complete Configuration Example
 

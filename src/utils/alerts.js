@@ -264,6 +264,10 @@ class Alerts {
     }
   }
 
+  deploymentsEnabled() {
+    return this.alertConfigs.deployment;
+  }
+
   async checkDeployment(address, blockNumber) {
     if (!this.alertConfigs.deployment) return;
 

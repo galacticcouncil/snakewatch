@@ -68,7 +68,7 @@ ALERT_PRICE_DELTA='[["GDOT/DOT", "5%", "10m"], ["GDOT/USDT", "10%", "1m"], ["DOT
 
 ### ALERT_DEPLOYMENT (Contract Deployment Monitoring)
 **Type:** boolean toggle (`1` / `true` / `yes` / `on` to enable; unset or anything else disables)
-**Purpose:** Notify on every EVM contract deployment (`evm.Created`) on the chain
+**Purpose:** Notify on every EVM contract deployment on the chain
 
 ```bash
 ALERT_DEPLOYMENT=true
@@ -77,6 +77,11 @@ ALERT_DEPLOYMENT=true
 **Alert Behavior:**
 - **🚨 TRIGGERED**: Fires once per deployed contract with its address and block number
 - No resolution state — each deployment is a standalone notification
+
+**Detection:** Rather than relying on `evm.Created` (which Frontier only emits for top-level
+deploys), the watcher inspects every `ethereum.Executed` and flags any touched address whose
+bytecode went from empty to non-empty in that block. This catches factory / CREATE2
+deployments too. When disabled, no extra chain reads are performed.
 
 ## Complete Configuration Example
 

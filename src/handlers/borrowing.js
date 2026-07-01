@@ -14,11 +14,17 @@ const borrowers = new Borrowers();
 const notDusted = ({siblings}) => siblings.find(({section, method}) =>
   section === 'duster' && method === 'Dusted') === undefined;
 
+// stHDX only exists as glue between pallet-gigahdx and the AAVE money market —
+// every supply/withdraw of it is an internal step of a gigahdx action already
+// reported by the staking handlers, never a standalone user action.
+const STHDX_ASSET_ID = 670;
+const notGigaHdxPlumbing = ({log: {args: {reserve}}}) => ERC20Mapping.decodeEvmAddress(reserve) !== STHDX_ASSET_ID;
+
 export default function borrowingHandler(events) {
   borrowers.init();
   events
-    .onLog('Supply', poolAbi, borrowers.handler(supply), notInRouter)
-    .onLog('Withdraw', poolAbi, borrowers.handler(withdraw), e => notInRouter(e) && notDusted(e))
+    .onLog('Supply', poolAbi, borrowers.handler(supply), e => notInRouter(e) && notGigaHdxPlumbing(e))
+    .onLog('Withdraw', poolAbi, borrowers.handler(withdraw), e => notInRouter(e) && notDusted(e) && notGigaHdxPlumbing(e))
     .onLog('Borrow', poolAbi, borrowers.handler(borrow))
     .onLog('Repay', poolAbi, borrowers.handler(repay))
     .onLog('LiquidationCall', poolAbi, borrowers.handler(liquidationCall))

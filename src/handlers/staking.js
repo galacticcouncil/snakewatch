@@ -33,7 +33,14 @@ async function rewardsClaimedHandler({event: {data: {who, paidRewards, unlockedR
   }
 }
 
-async function gigaStakedHandler({event: {data: {who, amount}}}) {
+// do_stake (which emits Staked) is also called internally by migrate and
+// cancel_unstake — each of those deposits its own, more specific event in the
+// same extrinsic, so skip the generic message and let that one stand alone.
+const isDerivedStake = siblings => siblings.some(({section, method}) =>
+  section === 'gigaHdx' && ['MigratedFromLegacy', 'UnstakeCancelled'].includes(method));
+
+async function gigaStakedHandler({event: {data: {who, amount}}, siblings}) {
+  if (isDerivedStake(siblings)) return;
   broadcast(`${formatAccount(who)} staked **${formatAmount(hdx(amount))}** into GIGAHDX`);
 }
 

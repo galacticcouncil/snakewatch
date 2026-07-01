@@ -1,6 +1,7 @@
 import {api} from './api.js';
 import ethers from "ethers";
 import {delay, timeout} from "./config.js";
+import {recordBlock} from "./health.js";
 import memoize from "memoizee";
 import process from "node:process";
 
@@ -57,9 +58,15 @@ export class Events {
       }, timeout * 1000);
     };
 
+    // arm immediately so a connect-but-never-stream RPC still trips the
+    // watchdog — otherwise it would only ever start ticking after the first
+    // block, leaving the process wedged "running" forever
+    resetWatchdog();
+
     api().query.system.number(head => {
       resetWatchdog();
       const number = head.toNumber() - delay;
+      recordBlock(number);
       this.emitFromBlock(number);
     });
   }

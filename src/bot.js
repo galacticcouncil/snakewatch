@@ -16,6 +16,7 @@ import hsm, {submitReport} from "./handlers/hsm.js";
 import circuitbreaker from "./handlers/circuitbreaker.js";
 import deployments from "./handlers/deployments.js";
 import {initDiscord} from "./discord.js";
+import "./health.js";
 import {rpc, sha, token, channel} from "./config.js";
 import {currenciesHandler} from "./currencies.js";
 import {endpoints} from "./endpoints.js";

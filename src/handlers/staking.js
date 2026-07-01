@@ -1,6 +1,8 @@
 import {formatAccount, formatAmount, hdx} from "../currencies.js";
 import {broadcast} from "../discord.js";
 
+const GIGAHDX = '<:GIGAHDX:1521826604924272690>';
+
 export default function stakingHandler(events) {
   events
     .on('staking', 'PositionCreated', stakeHandler)
@@ -41,12 +43,12 @@ const isDerivedStake = siblings => siblings.some(({section, method}) =>
 
 async function gigaStakedHandler({event: {data: {who, amount}}, siblings}) {
   if (isDerivedStake(siblings)) return;
-  broadcast(`${formatAccount(who)} staked **${formatAmount(hdx(amount))}** into GIGAHDX`);
+  broadcast(`${formatAccount(who)} staked **${formatAmount(hdx(amount))}** into GIGAHDX ${GIGAHDX}`);
 }
 
 async function gigaUnstakedHandler({event: {data: {who, payout, expiresAt}}, blockNumber}) {
   const blocksRemaining = expiresAt.toNumber() - blockNumber;
-  broadcast(`${formatAccount(who)} started unstaking **${formatAmount(hdx(payout))}** from GIGAHDX, unlocks at block #${expiresAt} (~${blocksRemaining} blocks)`);
+  broadcast(`${formatAccount(who)} started unstaking **${formatAmount(hdx(payout))}** from GIGAHDX ${GIGAHDX}, unlocks at block #${expiresAt} (~${blocksRemaining} blocks)`);
 }
 
 async function gigaUnlockedHandler({event: {data: {who, amount}}}) {
@@ -54,11 +56,11 @@ async function gigaUnlockedHandler({event: {data: {who, amount}}}) {
 }
 
 async function gigaUnstakeCancelledHandler({event: {data: {who, amount}}}) {
-  broadcast(`${formatAccount(who)} cancelled unstaking **${formatAmount(hdx(amount))}** and restaked it in GIGAHDX`);
+  broadcast(`${formatAccount(who)} cancelled unstaking **${formatAmount(hdx(amount))}** and restaked it in GIGAHDX ${GIGAHDX}`);
 }
 
 async function gigaMigratedHandler({event: {data: {who, hdxUnlocked}}}) {
-  broadcast(`${formatAccount(who)} migrated **${formatAmount(hdx(hdxUnlocked))}** from legacy staking into GIGAHDX`);
+  broadcast(`${formatAccount(who)} migrated **${formatAmount(hdx(hdxUnlocked))}** from legacy staking into GIGAHDX ${GIGAHDX}`);
 }
 
 async function gigaPoolContractUpdatedHandler({event: {data: {contract}}}) {
@@ -67,6 +69,6 @@ async function gigaPoolContractUpdatedHandler({event: {data: {contract}}}) {
 
 async function gigaRewardsClaimedHandler({event: {data: {who, totalHdx}}}) {
   if (Number(totalHdx) > 0) {
-    broadcast(`${formatAccount(who)} claimed **${formatAmount(hdx(totalHdx))}** governance rewards into GIGAHDX`);
+    broadcast(`${formatAccount(who)} claimed **${formatAmount(hdx(totalHdx))}** governance rewards into GIGAHDX ${GIGAHDX}`);
   }
 }

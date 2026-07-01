@@ -1,8 +1,5 @@
-import {formatAccount, formatAmount, hdx, loadCurrency} from "../currencies.js";
+import {formatAccount, formatAmount, hdx} from "../currencies.js";
 import {broadcast} from "../discord.js";
-
-const GIGAHDX_ASSET_ID = 67;
-const asGigaHdx = amount => ({currencyId: GIGAHDX_ASSET_ID, amount});
 
 export default function stakingHandler(events) {
   events
@@ -36,9 +33,8 @@ async function rewardsClaimedHandler({event: {data: {who, paidRewards, unlockedR
   }
 }
 
-async function gigaStakedHandler({event: {data: {who, amount, gigahdx: minted}}}) {
-  await loadCurrency(GIGAHDX_ASSET_ID);
-  broadcast(`${formatAccount(who)} staked **${formatAmount(hdx(amount))}** into GIGAHDX for **${formatAmount(asGigaHdx(minted))}**`);
+async function gigaStakedHandler({event: {data: {who, amount}}}) {
+  broadcast(`${formatAccount(who)} staked **${formatAmount(hdx(amount))}** into GIGAHDX`);
 }
 
 async function gigaUnstakedHandler({event: {data: {who, payout, expiresAt}}, blockNumber}) {

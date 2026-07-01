@@ -5,17 +5,21 @@ import {isSameAccount} from "../utils/emojify.js";
 
 export default function referralsHandler(events) {
   events
-    .onFilter('balances', 'Transfer', ({event: {data: {to}}}) => isReferralPot(to.toString()), transferHandler)
+    .onFilter('balances', 'Transfer', ({event: {data: {to}}}) => isRewardPot(to.toString()), transferHandler)
 }
 
-const referralPots = [
+const rewardPots = [
   '7L53bUTCCAvmCxhe15maHwJZbjQYH89LkXuyTnTi1J58xyFC',
   '13UVJyLkaPAE2HDTAaSadmwptPVwzY621KiKZ1ZrKYaXga2w',
+  // pallet_fee_processor's GigaHdxFeeReceiver (15% of trade fees) -> pallet_gigahdx::gigapot_account_id()
+  '12BMz7GAi6ZCN8JiDQ6u7gPX5i71LmVT3vY3qd2ieXvTLAxa',
+  // pallet_fee_processor's GigaHdxRewardsFeeReceiver (25% of trade fees) -> pallet_gigahdx_rewards::reward_accumulator_pot()
+  '167K5HduwPxdgUk2TYTvzAJf4QETArrLz11uT4L6rCAMAkBi',
 ];
 
-const isReferralPot = address => referralPots.some(pot => isSameAccount(address, pot));
+const isRewardPot = address => rewardPots.some(pot => isSameAccount(address, pot));
 
-export const notByReferralPot = ({event: {data: {who}}}) => !isReferralPot(who.toString());
+export const notByRewardPot = ({event: {data: {who}}}) => !isRewardPot(who.toString());
 
 const window = 150;
 let accrued = 0;

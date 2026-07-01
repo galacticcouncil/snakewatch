@@ -3,11 +3,11 @@ import {formatAccount, formatAmount, formatUsdValue, isWhale, usdValue} from "..
 import {broadcast} from "../discord.js";
 import {usdCurrencyId} from "../config.js";
 import {notInRouter} from "./router.js";
-import {notByReferralPot} from "./referrals.js";
+import {notByRewardPot} from "./referrals.js";
 
 export default function omnipoolHandler(events) {
   events
-    .onFilter('omnipool', 'SellExecuted', e => notInRouter(e) && notByReferralPot(e), sellHandler)
+    .onFilter('omnipool', 'SellExecuted', e => notInRouter(e) && notByRewardPot(e), sellHandler)
     .onFilter('omnipool', 'BuyExecuted', notInRouter, buyHandler)
     .on('omnipool', 'LiquidityAdded', liquidityAddedHandler)
     .on('omnipool', 'LiquidityRemoved', liquidityRemovedHandler);

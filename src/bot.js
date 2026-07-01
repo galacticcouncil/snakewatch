@@ -9,6 +9,7 @@ import transfers from "./handlers/transfers.js";
 import otc from "./handlers/otc.js";
 import dca, {terminator} from "./handlers/dca.js";
 import staking from "./handlers/staking.js";
+import gigahdx from "./handlers/gigahdx.js";
 import referrals from "./handlers/referrals.js";
 import borrowing from "./handlers/borrowing.js";
 import oracle from "./handlers/oracle.js";
@@ -53,6 +54,7 @@ async function main() {
   events.addHandler(dca)
   events.addHandler(transfers);
   events.addHandler(staking);
+  events.addHandler(gigahdx);
   events.addHandler(referrals);
   events.addHandler(borrowing);
   events.addHandler(oracle);

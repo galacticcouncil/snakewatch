@@ -15,7 +15,7 @@ export const port = process.env.PORT || 3000;
 export const liquidationAlert = Number(process.env.LIQ_ALERT);
 export const priceDivergenceThreshold = Number(process.env.PRICE_DIVERGENCE); // e.g 0.03 = 3%
 export const timeout = Number(process.env.TIMEOUT) || 120;
-export const mute = process.env.MUTE?.split(",") || ['BLAST'];
+export const mute = process.env.MUTE?.split(",") || ['BLAST', 'stHDX'];
 
 export const slackAlertWebhook = process.env.SLACK_ALERT_WEBHOOK;
 export const discordWebhook = process.env.DISCORD_WEBHOOK;

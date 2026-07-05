@@ -14,11 +14,21 @@ import Grafana from "./grafana.js";
 import { grafanaUrl, grafanaDatasource } from "../config.js";
 import {getAlerts} from "./alerts.js";
 
+// The router's WASM math (@galacticcouncil/math-omnipool) can panic on certain
+// pool states (seen for one pair with a "RuntimeError: unreachable" that never
+// returns control to the event loop, wedging the whole process). A JS-level
+// timeout can't preempt a synchronous hang, but it does protect the far more
+// common case of a slow-but-eventually-resolving call, and the backoff stops a
+// pair that just failed from being retried again on literally the next block.
+const SPOT_PRICE_TIMEOUT_MS = 5_000;
+const SPOT_PRICE_BACKOFF_MS = 5 * 60_000;
+
 export default class OraclePrices {
   constructor(priceDivergenceThreshold) {
     this.prices = {};
     this.lastGlobalUpdate = -1;
     this.queue = new PQueue({concurrency: 20, timeout: 10000});
+    this.spotPriceBackoffUntil = new Map();
     this.priceDivergenceThreshold = priceDivergenceThreshold;
 
     this.metrics = metrics.register('oracleprices', {
@@ -316,8 +326,19 @@ export default class OraclePrices {
 
   // Helper to get spot price from router
   async getSpotPrice(baseAssetId, quoteAssetId) {
+    const pairKey = `${baseAssetId}/${quoteAssetId}`;
+    const backoffUntil = this.spotPriceBackoffUntil.get(pairKey);
+    if (backoffUntil && Date.now() < backoffUntil) {
+      return null;
+    }
+
     try {
-      const tradeInfo = await sdk().getBestSpotPrice(baseAssetId, quoteAssetId);
+      const tradeInfo = await Promise.race([
+        sdk().getBestSpotPrice(baseAssetId, quoteAssetId),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error(`spot price timeout after ${SPOT_PRICE_TIMEOUT_MS}ms`)), SPOT_PRICE_TIMEOUT_MS)),
+      ]);
+      this.spotPriceBackoffUntil.delete(pairKey);
 
       if (!tradeInfo) {
         return null;
@@ -333,6 +354,7 @@ export default class OraclePrices {
         return null;
       }
     } catch (e) {
+      this.spotPriceBackoffUntil.set(pairKey, Date.now() + SPOT_PRICE_BACKOFF_MS);
       console.error(`Failed to get spot price for ${baseAssetId}/${quoteAssetId}:`, e);
       return null;
     }

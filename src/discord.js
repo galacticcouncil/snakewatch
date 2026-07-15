@@ -1,4 +1,4 @@
-import {Client, GatewayIntentBits} from 'discord.js';
+import {Client, GatewayIntentBits, MessageFlags} from 'discord.js';
 import markdownToAnsi from 'markdown-to-ansi'
 import memoize from "memoizee";
 import {mute} from "./config.js";
@@ -44,7 +44,7 @@ export function broadcast(message) {
   if (_client) {
     const channel = client().channels.cache.get(_channel);
     if (channel) {
-      channel.send(message);
+      channel.send({content: message, flags: MessageFlags.SuppressEmbeds});
     } else {
       console.error(new Error(`discord channel ${_channel} not connected`));
       process.exit(421);

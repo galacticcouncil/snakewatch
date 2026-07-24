@@ -4,11 +4,12 @@ import {formatAccount, formatAmount, formatUsdValue, isWhale, usdValue} from "..
 import {broadcast} from "../discord.js";
 import {notInRouter} from "./router.js";
 import {isHsm} from "./hsm.js";
+import {isBilSwap} from "./bil.js";
 
 export default function stableswapHandler(events) {
   events
-    .onFilter('stableswap', 'SellExecuted', notInRouter, sellHandler)
-    .onFilter('stableswap', 'BuyExecuted', e => notInRouter(e) && !isHsm(e), buyHandler)
+    .onFilter('stableswap', 'SellExecuted', e => notInRouter(e) && !isBilSwap(e), sellHandler)
+    .onFilter('stableswap', 'BuyExecuted', e => notInRouter(e) && !isHsm(e) && !isBilSwap(e), buyHandler)
     .onFilter('stableswap', 'LiquidityAdded', notInRouter, liquidityAddedHandler)
     .onFilter('stableswap', 'LiquidityRemoved', notInRouter, liquidityRemovedHandler);
 }

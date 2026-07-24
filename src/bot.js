@@ -15,6 +15,7 @@ import oracle from "./handlers/oracle.js";
 import hsm, {submitReport} from "./handlers/hsm.js";
 import circuitbreaker from "./handlers/circuitbreaker.js";
 import deployments from "./handlers/deployments.js";
+import bil from "./handlers/bil.js";
 import {initDiscord} from "./discord.js";
 import "./health.js";
 import {rpc, sha, token, channel} from "./config.js";
@@ -61,6 +62,7 @@ async function main() {
   events.addHandler(hsm);
   events.addHandler(circuitbreaker);
   events.addHandler(deployments);
+  events.addHandler(bil);
 
   if (process.env.NODE_ENV === 'test') {
     console.log('testing mode: pushing testing blocks');

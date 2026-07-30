@@ -28,4 +28,3 @@ export const slackAlertHF = process.env.ALERT_HF;
 export const slackAlertRate = process.env.ALERT_RATE;
 export const slackAlertPriceDelta = process.env.ALERT_PRICE_DELTA;
 export const alertDeployment = process.env.ALERT_DEPLOYMENT; // truthy ("1"/"true"/"yes"/"on") to notify on every contract deployment
-export const alertBil = process.env.ALERT_BIL; // truthy ("1"/"true"/"yes"/"on") to enable the BIL vault + 2-Pool-BIL feed

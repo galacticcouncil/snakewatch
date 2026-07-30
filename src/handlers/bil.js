@@ -3,7 +3,6 @@ import {broadcast} from "../discord.js";
 import {swapHandler} from "./xyk.js";
 import {toAccount} from "../utils/evm.js";
 import bilVaultAbi from "../resources/bil-vault.abi.js";
-import {alertBil} from "../config.js";
 import {notInRouter} from "./router.js";
 
 // BIL vault (ERC-4626 / ERC-7540 HOLLAR wrapper) EVM address on Hydration.
@@ -16,14 +15,10 @@ export const BIL_POOL_ID = 10055;
 const HOLLAR = 222;
 const UBIL = 550;
 
-// Default off; opt in with ALERT_BIL=1|true|yes|on.
-export const bilEnabled = /^(1|true|yes|on)$/i.test(String(alertBil ?? '').trim());
-
 // Hands 2-Pool-BIL swaps from the generic stableswap handler to this feed
-// without double-posting — mirrors the isHsm carve-out. Only claims the pool
-// while the feed is actually enabled, so default behaviour is unchanged.
+// without double-posting — mirrors the isHsm carve-out.
 export function isBilSwap({event}) {
-  return bilEnabled && Number(event.data.poolId) === BIL_POOL_ID;
+  return Number(event.data.poolId) === BIL_POOL_ID;
 }
 
 const atVault = ({event: {data: {log}}}) => log.address.toString().toLowerCase() === VAULT_ADDRESS;
@@ -32,8 +27,6 @@ const hollar = amount => ({currencyId: HOLLAR, amount});
 const ubil = amount => ({currencyId: UBIL, amount});
 
 export default function bilHandler(events) {
-  if (!bilEnabled) return; // feed disabled → register nothing
-
   // Pull the vault underlying + share into the currency cache; they only move
   // via evm.Log so currenciesHandler never sees them.
   Promise.all([HOLLAR, UBIL].map(loadCurrency)).catch(() => {});

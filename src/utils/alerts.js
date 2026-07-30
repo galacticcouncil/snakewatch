@@ -268,13 +268,62 @@ class Alerts {
     return this.alertConfigs.deployment;
   }
 
-  async checkDeployment(address, blockNumber) {
+  async checkDeployment(address, blockNumber, intel = {}) {
     if (!this.alertConfigs.deployment) return;
 
-    const message = `New contract deployed at ${address}${blockNumber ? ` in block #${blockNumber}` : ''}`;
+    const message = [
+      `New contract deployed at \`${address}\`${blockNumber ? ` in block #${blockNumber}` : ''}`,
+      ...this.describeDeployment(intel).map((line, i, lines) =>
+        `${i === lines.length - 1 ? '└' : '├'} ${line}`),
+    ].join('\n');
 
     // fire-and-forget notification: every deployment notifies, no active state to resolve
     await this.triggerAlert('deployment', address, 'BAD', message, false);
+  }
+
+  // one line per known fact, all optional — bare alert if enrichment came up empty
+  describeDeployment({code, probe = {}, deployerIntel, deployer, factory, factoryKind, txHash}) {
+    const lines = [];
+    const group = s => String(s).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    // exact decimal string in, readable amount out — no float roundtrip
+    const supply = s => {
+      const [int, frac = ''] = String(s).split('.');
+      if (int !== '0') return group(int);
+      const sig = frac.replace(/0+$/, '');
+      return sig ? `0.${sig}` : '0';
+    };
+
+    if (code?.size) {
+      const kind = probe.proxy ? `${probe.proxy} proxy` : code.kind || 'contract';
+      const shown = [...new Set(code.names)].slice(0, 8);
+      const hidden = code.selectors.length - shown.length;
+      const fns = code.minimalProxyImpl ? ''
+        : shown.length ? `, fns: ${shown.join(', ')}${hidden > 0 ? ` +${hidden} more` : ''}`
+        : code.selectors.length ? `, ${code.selectors.length} fns` : '';
+      lines.push(`${kind} — ${group(code.size)} B${fns}`);
+    }
+    if (probe.name || probe.symbol) {
+      const details = [probe.symbol, probe.decimals != null && `${probe.decimals} dec`,
+        probe.supply != null && `supply ${supply(probe.supply)}`].filter(Boolean).join(', ');
+      lines.push(`token "${probe.name || probe.symbol}" (${details})`);
+    }
+    const impl = code?.minimalProxyImpl || probe.impl;
+    if (impl || probe.beacon) {
+      lines.push([impl && `impl \`${impl}\``, probe.admin && `admin \`${probe.admin}\``,
+        probe.beacon && `beacon \`${probe.beacon}\``].filter(Boolean).join(' '));
+    }
+    if (probe.owner) lines.push(`owner \`${probe.owner}\``);
+    if (deployer) {
+      const activity = deployerIntel?.txCount != null ? `${group(deployerIntel.txCount)} txs` : null;
+      // bound is tri-state: null means the probe failed, so say nothing rather than "unbound"
+      const binding = deployerIntel?.bound === true ? 'bound substrate account'
+        : deployerIntel?.bound === false ? 'unbound' : null;
+      lines.push(`deployer \`${deployer}\`${activity || binding ? ` — ${[activity, binding].filter(Boolean).join(', ')}` : ''}`);
+    }
+    lines.push(factory ? `via \`${factory}\`${factoryKind ? ` (${factoryKind})` : ''}` : 'top-level deploy');
+    if (code?.flags?.length) lines.push(`⚠️ opcodes: ${code.flags.join(', ')}`);
+    if (txHash) lines.push(`tx \`${txHash}\``);
+    return lines;
   }
 
   getPricePairs() {

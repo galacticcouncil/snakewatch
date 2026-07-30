@@ -75,7 +75,8 @@ ALERT_DEPLOYMENT=true
 ```
 
 **Alert Behavior:**
-- **🚨 TRIGGERED**: Fires once per deployed contract with its address and block number
+- **🚨 TRIGGERED**: Fires once per deployed contract with its address, block number and
+  an intel report on the fresh contract
 - No resolution state — each deployment is a standalone notification
 
 **Detection:** Rather than relying on `evm.Created` (which Frontier only emits for top-level
@@ -84,6 +85,19 @@ bytecode went from empty to non-empty in that block. This catches factory / CREA
 deployments too. At init it preseeds the set of already-deployed contracts (from
 `evm.accountCodes`) so calls to existing contracts are skipped without a chain read. When the
 alert is disabled the handler is not registered at all — zero overhead.
+
+**Contract intel:** Each alert enriches the bare address with static and live analysis,
+one line per fact that could be established (missing probes degrade the alert, never block it):
+- **bytecode**: size, dispatcher selectors mapped to well-known function names, and a
+  fingerprint classification (ERC20 / ERC721 / ERC1155 / ERC4626 vault / UUPS / EIP-1167
+  minimal proxy). The opcode walk skips PUSH immediates and strips CBOR metadata, so data
+  bytes don't count as instructions.
+- **risky opcodes**: ⚠️ flags `selfdestruct`, `delegatecall`, `create`, `create2`
+- **proxy resolution**: EIP-1967 implementation / admin / beacon slots, EIP-1167 clone target
+- **token probe**: `name()` / `symbol()` / `decimals()` / `totalSupply()` and `owner()`
+  via `eth_call` (works through proxies)
+- **deployer**: transaction count and whether the EVM address is bound to a substrate account
+- **origin**: top-level deploy vs `via` the transaction target (classified too) + tx hash
 
 ### BIL Vault + 2-Pool-BIL Feed
 **Type:** always on (no configuration)
@@ -151,7 +165,13 @@ ALERT_PRICE_DELTA='[
 
 ### Contract Deployment Alerts
 ```
-🚨 **ALERT TRIGGERED** - New contract deployed at 0x1234...abcd in block #4776718
+🚨 **ALERT TRIGGERED** - New contract deployed at `0x6a21891db0940491603f3cca0a9f4dba4c6e810c` in block #12860846
+├ EIP-1967 proxy — 209 B
+├ token "Brazilian Invoice Loans" (BIL, 18 dec, supply 0)
+├ impl `0x804d2Fd6951d60510BBF6Fe2fE9F90829aB06BDa`
+├ deployer `0x71feb8b2849101a6e62e3369eaafdc6154cd0bc0` — 395 txs, unbound
+├ top-level deploy
+└ tx `0xfa91c9295f7700610e4c346541b5232a8011f9b758c0dba90c3c4d738698e65e`
 ```
 
 ## Monitoring & Management

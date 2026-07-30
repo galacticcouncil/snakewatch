@@ -8,6 +8,7 @@ import Borrowers from "../utils/borrowers.js";
 import {notInRouter} from "./router.js";
 import {getAlerts} from "../utils/alerts.js";
 import ethers from "ethers";
+import {borrowMarketFlag} from "../markets.js";
 
 const borrowers = new Borrowers();
 
@@ -40,10 +41,12 @@ async function withdraw({log: {args: {reserve, amount, to}}}) {
   broadcast(message);
 }
 
-async function borrow({log: {args: {reserve, amount, onBehalfOf}}}) {
+async function borrow(payload) {
+  const {log: {args: {reserve, amount, onBehalfOf}}} = payload;
   const borrowed = {currencyId: ERC20Mapping.decodeEvmAddress(reserve), amount}
   const account = await toAccount(onBehalfOf);
-  const message = `${formatAccount(account)} borrowed ${await formatAsset(borrowed)}`;
+  const address = payload.event.data.log.address;
+  const message = `${formatAccount(account)}${borrowMarketFlag(address)} borrowed ${await formatAsset(borrowed)}`;
   broadcast(message);
 }
 

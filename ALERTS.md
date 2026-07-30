@@ -97,7 +97,7 @@ one line per fact that could be established (missing probes degrade the alert, n
 - **token probe**: `name()` / `symbol()` / `decimals()` / `totalSupply()` and `owner()`
   via `eth_call` (works through proxies)
 - **deployer**: transaction count and whether the EVM address is bound to a substrate account
-- **origin**: top-level deploy vs `via factory` (with the factory classified too) + tx hash
+- **origin**: top-level deploy vs `via` the transaction target (classified too) + tx hash
 
 ### BIL Vault + 2-Pool-BIL Feed
 **Type:** always on (no configuration)

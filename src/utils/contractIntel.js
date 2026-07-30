@@ -43,7 +43,7 @@ const SELECTOR_NAMES = {
   '0x128acb08': 'swap',
   '0xac9650d8': 'multicall',
   '0x1cff79cd': 'execute',
-  '0x522f6815': 'flashLoan',
+  '0x5cffe9de': 'flashLoan',
   '0xab9c4b5d': 'flashLoan',
 };
 
@@ -61,14 +61,22 @@ const ERC20_ABI = [
 ];
 
 // resolve to null instead of hanging/rejecting so a wedged rpc can't stall the alert
-const attempt = (fn, ms = 4000) => Promise.race([
+export const attempt = (fn, ms = 4000) => Promise.race([
   Promise.resolve().then(fn).catch(() => null),
   new Promise(resolve => setTimeout(() => resolve(null), ms).unref?.()),
 ]);
 
-// solidity appends cbor metadata (…"solc"…) with a 2-byte length suffix; strip it so the
-// opcode walk doesn't misread hash bytes as SELFDESTRUCT & co.
+// solidity appends cbor metadata (…"solc"…) with a 2-byte length suffix — and embeds the
+// same block mid-buffer for every sub-assembly (child creation code of `new Child()`).
+// cut at the earliest byte-aligned marker so random hash bytes never decode as opcodes;
+// fall back to the trailing-length heuristic for exotic layouts.
 export function stripMetadata(code) {
+  const hex = code.toString('hex');
+  const marker = /a264697066735822|a165627a7a723058|a265627a7a72315820/g;
+  for (let m; (m = marker.exec(hex));) {
+    if (m.index % 2 === 0) return code.subarray(0, m.index / 2);
+    marker.lastIndex = m.index + 1;
+  }
   if (code.length < 4) return code;
   const len = (code[code.length - 2] << 8) | code[code.length - 1];
   const start = code.length - 2 - len;
@@ -83,7 +91,8 @@ export function analyzeBytecode(codeHex) {
   const intel = {size: hex.length / 2, selectors: [], names: [], flags: [], minimalProxyImpl: null, kind: null};
   if (!hex.length) return intel;
 
-  const clone = hex.match(/^363d3d373d3d3d363d73([0-9a-f]{40})5af43d82803e903d91602b57fd5bf3$/);
+  const clone = hex.match(/^363d3d373d3d3d363d73([0-9a-f]{40})5af43d82803e903d91602b57fd5bf3$/)
+    || hex.match(/^3d3d3d3d363d3d37363d73([0-9a-f]{40})5af43d3d93803e602a57fd5bf3$/); // solady
   if (clone) {
     intel.minimalProxyImpl = '0x' + clone[1];
     intel.kind = 'EIP-1167 minimal proxy';
@@ -93,12 +102,17 @@ export function analyzeBytecode(codeHex) {
   const code = stripMetadata(Buffer.from(hex, 'hex'));
   const selectors = new Set();
   const flags = new Set();
+  let lastCompare = -1;
   for (let i = 0; i < code.length; i++) {
     const op = code[i];
     if (op >= 0x60 && op <= 0x7f) { // PUSHn — skip immediate
       const n = op - 0x5f;
-      if (op === 0x63 && code[i + 5] === 0x14) { // PUSH4 <sel> EQ — dispatcher compare
+      // PUSH4 <sel> followed by EQ / SUB / XOR — dispatcher compare (legacy and via-ir).
+      // compares sit densely packed; a distant hit is an embedded child's dispatcher, not ours
+      if (op === 0x63 && [0x14, 0x03, 0x18].includes(code[i + 5])
+        && (lastCompare === -1 || i - lastCompare <= 256)) {
         selectors.add('0x' + code.subarray(i + 1, i + 5).toString('hex'));
+        lastCompare = i;
       }
       i += n;
     } else if (op === 0xff) flags.add('selfdestruct');
@@ -127,23 +141,28 @@ function classify(s) {
 // everything best-effort — a dead probe degrades the alert, never blocks it.
 export async function probeContract(address) {
   const probe = {};
-  const [impl, admin, beacon] = await Promise.all(
-    [IMPL_SLOT, ADMIN_SLOT, BEACON_SLOT].map(slot =>
-      attempt(() => provider.getStorageAt(address, slot).then(slotAddress))));
-  if (impl) Object.assign(probe, {impl, admin, beacon, proxy: 'EIP-1967'});
-  else if (beacon) Object.assign(probe, {beacon, proxy: 'EIP-1967 beacon'});
-
   const token = new ethers.Contract(address, ERC20_ABI, provider);
-  const [name, symbol, decimals, totalSupply, owner] = await Promise.all([
+  const [impl, admin, beacon, name, symbol, decimals, totalSupply, owner] = await Promise.all([
+    ...[IMPL_SLOT, ADMIN_SLOT, BEACON_SLOT].map(slot =>
+      attempt(() => provider.getStorageAt(address, slot).then(slotAddress))),
     attempt(() => token.name()),
     attempt(() => token.symbol()),
     attempt(() => token.decimals()),
     attempt(() => token.totalSupply()),
     attempt(() => token.owner().then(o => o === ethers.constants.AddressZero ? null : o)),
   ]);
+  if (impl) Object.assign(probe, {impl, admin, beacon, proxy: 'EIP-1967'});
+  else if (beacon) {
+    // beacon proxies keep the implementation on the beacon, not in the proxy
+    const beaconImpl = await attempt(() =>
+      new ethers.Contract(beacon, ['function implementation() view returns (address)'], provider)
+        .implementation());
+    Object.assign(probe, {impl: beaconImpl, beacon, proxy: 'EIP-1967 beacon'});
+  }
   if (name || symbol) {
+    // keep supply as the exact decimal string — Number() fabricates digits past 2^53
     const supply = totalSupply != null && decimals != null
-      ? Number(ethers.utils.formatUnits(totalSupply, decimals)) : null;
+      ? ethers.utils.formatUnits(totalSupply, decimals) : null;
     Object.assign(probe, {name: sanitizeLabel(name), symbol: sanitizeLabel(symbol), decimals, supply});
   }
   if (owner) probe.owner = owner;
@@ -171,5 +190,6 @@ export async function probeDeployer(address) {
       return !extension.isEmpty;
     }),
   ]);
-  return {address, txCount, bound: !!bound};
+  // bound stays null when the probe failed — unknown is not "unbound"
+  return {address, txCount, bound};
 }

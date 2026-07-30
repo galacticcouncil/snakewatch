@@ -1,6 +1,6 @@
 import {api} from "../api.js";
 import {getAlerts} from "../utils/alerts.js";
-import {analyzeBytecode, probeContract, probeDeployer} from "../utils/contractIntel.js";
+import {analyzeBytecode, attempt, probeContract, probeDeployer} from "../utils/contractIntel.js";
 
 // Addresses already holding bytecode, so normal calls to them are skipped without a chain
 // read. Seeded once at init from evm.accountCodes and extended as new deploys are seen.
@@ -71,12 +71,8 @@ async function gatherIntel(address, codeHex, deployer, target) {
 }
 
 async function analyzeKnownFactory(factory) {
-  try {
-    const code = await api().query.evm.accountCodes(factory);
-    return analyzeBytecode(code.toHex()).kind;
-  } catch {
-    return null;
-  }
+  const code = await attempt(() => api().query.evm.accountCodes(factory));
+  return code ? analyzeBytecode(code.toHex()).kind : null;
 }
 
 // EVM addresses touched by this transaction that could be freshly deployed contracts:

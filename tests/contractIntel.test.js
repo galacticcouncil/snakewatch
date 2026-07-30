@@ -12,11 +12,31 @@ describe("bytecode analysis", () => {
     expect(intel.kind).toBe('EIP-1167 minimal proxy');
   });
 
+  it("detects the solady clone variant", () => {
+    const impl = 'c0ffee254729296a45a3885639ac7e10f9d54979';
+    const intel = analyzeBytecode(`0x3d3d3d3d363d3d37363d73${impl}5af43d3d93803e602a57fd5bf3`);
+    expect(intel.minimalProxyImpl).toBe('0x' + impl);
+    expect(intel.kind).toBe('EIP-1167 minimal proxy');
+  });
+
   it("extracts dispatcher selectors and classifies erc20", () => {
     const intel = analyzeBytecode(dispatcher(['a9059cbb', '095ea7b3', '70a08231', '18160ddd', '313ce567']));
     expect(intel.selectors).toEqual(expect.arrayContaining(['0xa9059cbb', '0x095ea7b3', '0x70a08231', '0x18160ddd']));
     expect(intel.names).toEqual(expect.arrayContaining(['transfer', 'approve', 'balanceOf', 'totalSupply', 'decimals']));
     expect(intel.kind).toBe('ERC20');
+  });
+
+  it("catches via-ir SUB/XOR dispatcher compares", () => {
+    // unoptimized via-ir compiles the last compare as PUSH4 <sel> SUB PUSH2 <dst> JUMPI
+    const intel = analyzeBytecode('0x6080604052' +
+      '8063095ea7b31461004057' + '8063a9059cbb0361000e57' + '806318160ddd1861001257' + '00');
+    expect(intel.selectors.sort()).toEqual(['0x095ea7b3', '0x18160ddd', '0xa9059cbb']);
+  });
+
+  it("ignores a distant selector cluster from embedded child code", () => {
+    const intel = analyzeBytecode('0x' + '8063a9059cbb1461004057' + '00'.repeat(300) +
+      '8063deadbeef1461004057' + '00');
+    expect(intel.selectors).toEqual(['0xa9059cbb']);
   });
 
   it("classifies erc4626 vault", () => {
@@ -41,6 +61,12 @@ describe("bytecode analysis", () => {
     expect(intel.flags).toEqual([]);
     const kept = stripMetadata(Buffer.from('608060405200ff', 'hex'));
     expect(kept.length).toBe(7); // no plausible metadata → untouched
+  });
+
+  it("cuts at embedded child metadata, not just the trailing block", () => {
+    // child cbor (ipfs marker + random hash containing 0xff/0xf4) sits mid-buffer
+    const intel = analyzeBytecode('0x608060405200' + 'a264697066735822' + 'fff4'.repeat(16) + '6080604052');
+    expect(intel.flags).toEqual([]);
   });
 
   it("survives empty and non-contract input", () => {
@@ -73,7 +99,7 @@ describe("deployment alert message", () => {
       'token "Token X" (TKX, 18 dec, supply 1 000 000)',
       `owner \`0x${'11'.repeat(20)}\``,
       `deployer \`0x${'22'.repeat(20)}\` — 42 txs, bound substrate account`,
-      `via factory \`0x${'33'.repeat(20)}\` (ERC4626 vault)`,
+      `via \`0x${'33'.repeat(20)}\` (ERC4626 vault)`,
       '⚠️ opcodes: delegatecall',
       `tx \`0x${'44'.repeat(32)}\``,
     ]);
@@ -81,5 +107,35 @@ describe("deployment alert message", () => {
 
   it("degrades to the bare minimum when enrichment is empty", () => {
     expect(getAlerts().describeDeployment({})).toEqual(['top-level deploy']);
+  });
+
+  it("renders exact supply strings without float artifacts", () => {
+    const line = supply => getAlerts().describeDeployment({
+      probe: {symbol: 'X', supply}})[0];
+    expect(line('123456789012345678901.0')).toContain('supply 123 456 789 012 345 678 901');
+    expect(line('0.000000000000000001')).toContain('supply 0.000000000000000001');
+    expect(line('0.0')).toContain('supply 0');
+  });
+
+  it("says nothing about binding when the probe failed", () => {
+    const [line] = getAlerts().describeDeployment({
+      deployer: '0xabc', deployerIntel: {txCount: null, bound: null}});
+    expect(line).toBe('deployer `0xabc`');
+  });
+
+  it("shows the beacon even when its implementation could not be resolved", () => {
+    const lines = getAlerts().describeDeployment({
+      code: {size: 200, kind: null, flags: [], selectors: [], names: [], minimalProxyImpl: null},
+      probe: {proxy: 'EIP-1967 beacon', beacon: '0x' + '55'.repeat(20), impl: null}});
+    expect(lines[0]).toBe('EIP-1967 beacon proxy — 200 B');
+    expect(lines[1]).toBe(`beacon \`0x${'55'.repeat(20)}\``);
+  });
+
+  it("counts hidden functions from what was actually shown", () => {
+    const lines = getAlerts().describeDeployment({
+      code: {size: 100, kind: null, flags: [], minimalProxyImpl: null,
+        selectors: Array.from({length: 12}, (_, i) => `0x0000000${i.toString(16)}`),
+        names: ['transfer', 'transfer', 'approve']}});
+    expect(lines[0]).toBe('contract — 100 B, fns: transfer, approve +10 more');
   });
 });

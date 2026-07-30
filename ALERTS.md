@@ -85,6 +85,21 @@ deployments too. At init it preseeds the set of already-deployed contracts (from
 `evm.accountCodes`) so calls to existing contracts are skipped without a chain read. When the
 alert is disabled the handler is not registered at all — zero overhead.
 
+### BIL Vault + 2-Pool-BIL Feed
+**Type:** always on (no configuration)
+**Purpose:** Report BIL activity to Discord — the BIL vault lifecycle plus swaps in the
+2-Pool-BIL stableswap.
+
+**What it reports:**
+- **Vault lifecycle** (ERC-4626 / ERC-7540 vault at `0x6a21891Db0940491603f3ccA0a9f4DBA4c6E810C`):
+  deposits, redemption requests, redemptions fulfilled / partially filled, cancellations, and
+  settled claims. HOLLAR amounts are shown as HOLLAR (asset 222); share amounts as uBIL (asset 550).
+- **2-Pool-BIL swaps** (stableswap pool `10055`, assets BIL=55 / HOLLAR=222). These swaps are
+  reported by the BIL feed and skipped by the generic stableswap handler so they post exactly once.
+
+**Behavior:** Discord broadcast only (like the borrowing / stableswap feeds), not the Slack alert
+subsystem. Always registered — no toggle.
+
 ## Complete Configuration Example
 
 ```bash

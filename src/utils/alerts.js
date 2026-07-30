@@ -268,13 +268,48 @@ class Alerts {
     return this.alertConfigs.deployment;
   }
 
-  async checkDeployment(address, blockNumber) {
+  async checkDeployment(address, blockNumber, intel = {}) {
     if (!this.alertConfigs.deployment) return;
 
-    const message = `New contract deployed at ${address}${blockNumber ? ` in block #${blockNumber}` : ''}`;
+    const message = [
+      `New contract deployed at \`${address}\`${blockNumber ? ` in block #${blockNumber}` : ''}`,
+      ...this.describeDeployment(intel).map((line, i, lines) =>
+        `${i === lines.length - 1 ? '└' : '├'} ${line}`),
+    ].join('\n');
 
     // fire-and-forget notification: every deployment notifies, no active state to resolve
     await this.triggerAlert('deployment', address, 'BAD', message, false);
+  }
+
+  // one line per known fact, all optional — bare alert if enrichment came up empty
+  describeDeployment({code, probe = {}, deployerIntel, deployer, factory, factoryKind, txHash}) {
+    const lines = [];
+    const num = n => new Intl.NumberFormat('en-US').format(n).replace(/,/g, ' ');
+
+    if (code?.size) {
+      const kind = probe.proxy ? `${probe.proxy} proxy` : code.kind || 'contract';
+      const fns = code.minimalProxyImpl ? ''
+        : code.names.length ? `, fns: ${code.names.slice(0, 8).join(', ')}${code.selectors.length > code.names.length ? ` +${code.selectors.length - code.names.length} more` : ''}`
+        : code.selectors.length ? `, ${code.selectors.length} fns` : '';
+      lines.push(`${kind} — ${num(code.size)} B${fns}`);
+    }
+    if (probe.name || probe.symbol) {
+      const details = [probe.symbol, probe.decimals != null && `${probe.decimals} dec`,
+        probe.supply != null && `supply ${num(probe.supply)}`].filter(Boolean).join(', ');
+      lines.push(`token "${probe.name || probe.symbol}" (${details})`);
+    }
+    const impl = code?.minimalProxyImpl || probe.impl;
+    if (impl) lines.push(`impl \`${impl}\`${probe.admin ? ` admin \`${probe.admin}\`` : ''}${probe.beacon ? ` beacon \`${probe.beacon}\`` : ''}`);
+    if (probe.owner) lines.push(`owner \`${probe.owner}\``);
+    if (deployer) {
+      const activity = deployerIntel?.txCount != null ? `${num(deployerIntel.txCount)} txs` : null;
+      const binding = deployerIntel ? (deployerIntel.bound ? 'bound substrate account' : 'unbound') : null;
+      lines.push(`deployer \`${deployer}\`${activity || binding ? ` — ${[activity, binding].filter(Boolean).join(', ')}` : ''}`);
+    }
+    lines.push(factory ? `via factory \`${factory}\`${factoryKind ? ` (${factoryKind})` : ''}` : 'top-level deploy');
+    if (code?.flags?.length) lines.push(`⚠️ opcodes: ${code.flags.join(', ')}`);
+    if (txHash) lines.push(`tx \`${txHash}\``);
+    return lines;
   }
 
   getPricePairs() {

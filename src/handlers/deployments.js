@@ -1,5 +1,6 @@
 import {api} from "../api.js";
 import {getAlerts} from "../utils/alerts.js";
+import {analyzeBytecode, probeContract, probeDeployer} from "../utils/contractIntel.js";
 
 // Addresses already holding bytecode, so normal calls to them are skipped without a chain
 // read. Seeded once at init from evm.accountCodes and extended as new deploys are seen.
@@ -26,6 +27,11 @@ async function executedHandler({event, siblings, blockNumber, blockHash}) {
   const candidates = candidateAddresses(event, siblings);
   if (!candidates.size) return;
 
+  const {data} = event;
+  const deployer = data.from?.toString().toLowerCase();
+  const target = data.to?.toString().toLowerCase();
+  const txHash = data.transactionHash?.toString();
+
   let parentHash;
   for (const address of candidates) {
     if (knownContracts.has(address)) continue; // deployed before — not news
@@ -39,8 +45,37 @@ async function executedHandler({event, siblings, blockNumber, blockHash}) {
 
     knownContracts.add(address); // remember so we never re-check it
     if (before.toHex() === '0x') {
-      await getAlerts().checkDeployment(address, blockNumber);
+      const intel = await gatherIntel(address, after.toHex(), deployer, target);
+      await getAlerts().checkDeployment(address, blockNumber, {deployer, txHash, ...intel});
     }
+  }
+}
+
+// enrichment is strictly best-effort: whatever fails, the bare alert still goes out
+async function gatherIntel(address, codeHex, deployer, target) {
+  try {
+    const code = analyzeBytecode(codeHex);
+    // a candidate that isn't the call target was spawned by an inner CREATE/CREATE2 —
+    // the transaction target is the factory
+    const factory = target && target !== address ? target : null;
+    const [probe, deployerIntel, factoryKnown] = await Promise.all([
+      probeContract(address),
+      deployer ? probeDeployer(deployer) : null,
+      factory ? analyzeKnownFactory(factory) : null,
+    ]);
+    return {code, probe, deployerIntel, factory, factoryKind: factoryKnown};
+  } catch (e) {
+    console.error('deployment alert: intel gathering failed for', address, e);
+    return {};
+  }
+}
+
+async function analyzeKnownFactory(factory) {
+  try {
+    const code = await api().query.evm.accountCodes(factory);
+    return analyzeBytecode(code.toHex()).kind;
+  } catch {
+    return null;
   }
 }
 

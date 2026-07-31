@@ -1,11 +1,13 @@
 import {formatAccount, formatAmount, formatUsdValue, isWhale, usdValue} from "../currencies.js";
 import {broadcast} from "../discord.js";
+import {isNttTransfer} from "../utils/ntt.js";
 
 export default function transfersHandler(events) {
   events.onFilter(
     'currencies',
     'Transferred',
-    ({siblings}) => siblings.find(({section}) => ['xyk', 'lbp', 'omnipool', 'otc'].includes(section)) === undefined,
+    payload => payload.siblings.find(({section}) => ['xyk', 'lbp', 'omnipool', 'otc'].includes(section)) === undefined
+      && !isNttTransfer(payload),
     transferredHandler
   );
   events.onFilter(

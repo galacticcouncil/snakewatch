@@ -115,6 +115,32 @@ one line per fact that could be established (missing probes degrade the alert, n
 **Behavior:** Discord broadcast only (like the borrowing / stableswap feeds), not the Slack alert
 subsystem. Always registered — no toggle.
 
+### Wormhole NTT Feed + Alerts
+**Type:** always on (no configuration)
+**Purpose:** Monitor the eleven production Wormhole NTT pairs that connect Hydration to
+Ethereum, Base, Solana and Sui.
+
+**Discord feed:**
+- successful outbound transfers, with asset, amount, destination chain/recipient and sequence
+- successful inbound redemptions, paired with the matching `currencies.Deposited` event so the
+  recipient and amount are shown
+- outbound queue cancellations and returned funds
+
+**Webhook alerts:**
+- any inbound or outbound NTT queue event on Hydration (the deployed Hydration limits are
+  effectively unlimited, so queueing indicates configuration drift)
+- failed NTT executions caused by the runtime mint fuse (`MintLimitReached`) or an invalid/cleared
+  runtime minter binding (`CallerNotMinter`); mint-fuse alerts call out that the VAA must be retried
+- manager/transceiver pause, ownership, pauser, implementation, peer, threshold, transceiver or
+  rate-limit changes
+- runtime NTT minter bindings being set or cleared, including an explicit warning when a binding
+  points at a manager other than the audited deployment
+- a `TransferRedeemed` event without its expected Hydration deposit
+
+The contract list is pinned to the audited production deployment instead of discovered from the
+live minter map. This keeps emergency-cleared managers under observation. Prometheus exposes
+`ntt_transfers_total` and `ntt_control_changes_total` with asset and lifecycle labels.
+
 ## Complete Configuration Example
 
 ```bash

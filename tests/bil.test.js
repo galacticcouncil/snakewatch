@@ -1,6 +1,17 @@
 import ethers from "ethers";
 import bilVaultAbi from "../src/resources/bil-vault.abi.js";
-import {realDepositor, BIL_POOL_ADDRESS} from "../src/handlers/bil-depositor.js";
+import {realDepositor, isBilPool, BIL_POOL_ADDRESS} from "../src/handlers/bil-depositor.js";
+
+describe("BIL pool carve-out", () => {
+  const withAddress = address => ({event: {data: {log: {address: {toString: () => address}}}}});
+  it("flags evm.Log from the BIL pool", () => {
+    expect(isBilPool(withAddress(BIL_POOL_ADDRESS.toUpperCase()))).toBe(true);
+  });
+  it("ignores other pools / malformed payloads", () => {
+    expect(isBilPool(withAddress("0x" + "11".repeat(20)))).toBe(false);
+    expect(isBilPool({})).toBeFalsy();
+  });
+});
 
 describe("BIL deposit attribution", () => {
   // Deposits route through BILDepositZap, so the vault's Deposited event names

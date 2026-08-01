@@ -7,6 +7,15 @@ const supplyIface = new ethers.utils.Interface([
   'event Supply(address indexed reserve, address user, address indexed onBehalfOf, uint256 amount, uint16 indexed referralCode)',
 ]);
 
+// True when an Aave evm.Log came from the BIL pool. The BIL feed narrates the
+// vault's deposit / redemption lifecycle — the only source of the BIL pool's
+// uBIL supplies and withdraws — so the generic borrowing handler skips those to
+// avoid a duplicate "supplied/withdrew uBIL" line next to the vault message.
+export function isBilPool(payload) {
+  const addr = payload?.event?.data?.log?.address?.toString?.();
+  return addr?.toLowerCase() === BIL_POOL_ADDRESS;
+}
+
 // Deposits route through BILDepositZap, so the vault's `Deposited` event records
 // the zap as `user` (not the depositor). The real depositor is the BIL pool's
 // `Supply.onBehalfOf` emitted in the same extrinsic — the account that receives

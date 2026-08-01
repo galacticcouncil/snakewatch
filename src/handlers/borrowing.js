@@ -9,6 +9,7 @@ import {notInRouter} from "./router.js";
 import {getAlerts} from "../utils/alerts.js";
 import ethers from "ethers";
 import {borrowMarketFlag} from "../markets.js";
+import {isBilPool} from "./bil-depositor.js";
 
 const borrowers = new Borrowers();
 
@@ -18,8 +19,11 @@ const notDusted = ({siblings}) => siblings.find(({section, method}) =>
 export default function borrowingHandler(events) {
   borrowers.init();
   events
-    .onLog('Supply', poolAbi, borrowers.handler(supply), notInRouter)
-    .onLog('Withdraw', poolAbi, borrowers.handler(withdraw), e => notInRouter(e) && notDusted(e))
+    // BIL-pool uBIL supplies/withdraws are vault mechanics already narrated by
+    // the BIL feed's deposit/redemption messages — skip them here to avoid a
+    // duplicate "supplied/withdrew uBIL" line.
+    .onLog('Supply', poolAbi, borrowers.handler(supply), e => notInRouter(e) && !isBilPool(e))
+    .onLog('Withdraw', poolAbi, borrowers.handler(withdraw), e => notInRouter(e) && notDusted(e) && !isBilPool(e))
     .onLog('Borrow', poolAbi, borrowers.handler(borrow))
     .onLog('Repay', poolAbi, borrowers.handler(repay))
     .onLog('LiquidationCall', poolAbi, borrowers.handler(liquidationCall))

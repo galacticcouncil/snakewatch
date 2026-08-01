@@ -1,5 +1,48 @@
 import ethers from "ethers";
 import bilVaultAbi from "../src/resources/bil-vault.abi.js";
+import {realDepositor, BIL_POOL_ADDRESS} from "../src/handlers/bil-depositor.js";
+
+describe("BIL deposit attribution", () => {
+  // Deposits route through BILDepositZap, so the vault's Deposited event names
+  // the zap. The real depositor is the pool Supply's onBehalfOf in the same
+  // extrinsic. realDepositor() must recover it from the sibling evm.Log events.
+  const supply = new ethers.utils.Interface([
+    "event Supply(address indexed reserve, address user, address indexed onBehalfOf, uint256 amount, uint16 indexed referralCode)",
+  ]);
+  const ZAP = "0x646fd203bbcf19b35d79f58413bb07450fdbb1db";
+  const RESERVE = "0x0000000000000000000000000000000100000226";
+
+  // Mock a sibling evm.Log event the way processEvents/onLog expose it.
+  const evmLog = (address, {topics, data}) => ({
+    section: "evm",
+    method: "Log",
+    data: {log: {toHuman: () => ({address, topics, data})}},
+  });
+  const supplyLog = (address, onBehalfOf) =>
+    evmLog(address, supply.encodeEventLog(supply.getEvent("Supply"), [RESERVE, ZAP, onBehalfOf, 100, 0]));
+
+  it("uses the pool Supply onBehalfOf as the depositor", () => {
+    const user = "0x" + "ab".repeat(20);
+    const payload = {
+      siblings: [
+        {section: "balances", method: "Transfer"}, // non-evm sibling is skipped
+        supplyLog(BIL_POOL_ADDRESS, user),
+      ],
+    };
+    expect(realDepositor(payload, ZAP).toLowerCase()).toBe(user);
+  });
+
+  it("ignores Supply logs from other pools", () => {
+    const user = "0x" + "cd".repeat(20);
+    const payload = {siblings: [supplyLog("0x" + "11".repeat(20), user)]};
+    expect(realDepositor(payload, ZAP)).toBe(ZAP); // wrong pool → fallback
+  });
+
+  it("falls back to the vault arg when there is no Supply sibling", () => {
+    expect(realDepositor({siblings: []}, ZAP)).toBe(ZAP);
+    expect(realDepositor({}, ZAP)).toBe(ZAP);
+  });
+});
 
 describe("BIL vault ABI", () => {
   const iface = new ethers.utils.Interface(bilVaultAbi);

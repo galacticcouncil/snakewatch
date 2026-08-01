@@ -4,6 +4,7 @@ import {swapHandler} from "./xyk.js";
 import {toAccount} from "../utils/evm.js";
 import bilVaultAbi from "../resources/bil-vault.abi.js";
 import {notInRouter} from "./router.js";
+import {realDepositor} from "./bil-depositor.js";
 
 // BIL vault (ERC-4626 / ERC-7540 HOLLAR wrapper) EVM address on Hydration.
 export const VAULT_ADDRESS = '0x6a21891db0940491603f3cca0a9f4dba4c6e810c';
@@ -46,9 +47,10 @@ export default function bilHandler(events) {
     .onFilter('stableswap', 'BuyExecuted', e => notInRouter(e) && isBilSwap(e), bilSwap);
 }
 
-async function deposited({log: {args: {user, hollarAmount, bilMinted}}}) {
+async function deposited(payload) {
+  const {user, hollarAmount, bilMinted} = payload.log.args;
   await Promise.all([HOLLAR, BIL].map(loadCurrency));
-  const account = await toAccount(user);
+  const account = await toAccount(realDepositor(payload, user));
   const message = `${formatAccount(account)} deposited ${fmtHollar(hollarAmount)} into the 🇧🇷 BIL vault for ${await formatAsset(bil(bilMinted))}`;
   broadcast(message);
 }

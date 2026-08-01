@@ -28,3 +28,13 @@ export const slackAlertHF = process.env.ALERT_HF;
 export const slackAlertRate = process.env.ALERT_RATE;
 export const slackAlertPriceDelta = process.env.ALERT_PRICE_DELTA;
 export const alertDeployment = process.env.ALERT_DEPLOYMENT; // truthy ("1"/"true"/"yes"/"on") to notify on every contract deployment
+
+// ── NTT backing monitor ── origin-chain RPCs for reading hub custody balances
+export const ethRpc = process.env.ETH_RPC || 'https://ethereum-rpc.publicnode.com';
+export const baseRpc = process.env.BASE_RPC || 'https://base-rpc.publicnode.com';
+export const solanaRpc = process.env.SOLANA_RPC || 'https://api.mainnet-beta.solana.com';
+export const suiRpc = process.env.SUI_RPC || 'https://sui-rpc.publicnode.com';
+export const backingIntervalSeconds = Number(process.env.BACKING_INTERVAL || 300); // poll cadence
+export const backingThreshold = Number(process.env.BACKING_THRESHOLD || 1); // custody/supply below this ⇒ under-backed
+export const backingReAlertHours = Number(process.env.BACKING_REALERT_HOURS || 6); // re-alert cadence while under-backed
+export const backingDisabled = /^(1|true|yes|on)$/i.test(process.env.BACKING_DISABLED || ''); // set to skip the monitor

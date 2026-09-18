@@ -115,6 +115,28 @@ one line per fact that could be established (missing probes degrade the alert, n
 **Behavior:** Discord broadcast only (like the borrowing / stableswap feeds), not the Slack alert
 subsystem. Always registered — no toggle.
 
+### Gamma Vault Feed (concentrated liquidity)
+**Type:** always on (no configuration)
+**Purpose:** Report liquidity added to / removed from the Gamma Hypervisor vaults that manage
+Hydration's concentrated-liquidity pools, in the same shape as the xyk liquidity lines.
+
+**What it reports:**
+- **Deposits** (`Hypervisor.Deposit`): `💦 **13.6 aDOT** + **106.8 HOLLAR** liquidity added by <account>`.
+  Deposits arrive through UniProxy, which passes the caller as the token source, so the event's
+  `sender` is the real depositor.
+- **Withdrawals** (`Hypervisor.Withdraw`): `🚰 **13.6 aDOT** + **106.8 HOLLAR** liquidity removed by <account>`.
+- Single-sided legs (amount 0) are dropped from the line. Whale-sized values (`WHALE_AMOUNT`) swap
+  the account icon for 🐋, like every other feed.
+- Swaps through the pool are **not** reported here — they already surface via the router feed.
+  Keeper rebalances are ignored.
+
+**Vaults:** the address → pool-asset map lives in `src/handlers/gamma.js` (`VAULTS`). Currently the
+aDOT/HOLLAR 0.3% vault at `0xa206D0959813f17c17C87147271C49065438648A` (token0 = aDOT `1001`,
+token1 = HOLLAR `222`). Adding a vault is one entry.
+
+**Behavior:** Discord broadcast only (like the xyk / BIL feeds), not the Slack alert subsystem.
+Always registered — no toggle.
+
 ## Complete Configuration Example
 
 ```bash

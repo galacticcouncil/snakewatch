@@ -1,9 +1,10 @@
 import {swapHandler} from "./xyk.js";
 import {notInDca} from "./dca.js";
+import {notInIce} from "./ice.js";
 
 export default function routerHandler(events) {
   events
-    .onFilter('router', 'Executed', notInDca, routeExecutedHandler)
+    .onFilter('router', 'Executed', e => notInDca(e) && notInIce(e), routeExecutedHandler)
 }
 
 export function notInRouter({siblings}) {

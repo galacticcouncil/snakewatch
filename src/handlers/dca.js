@@ -11,7 +11,7 @@ export default function otcHandler(events) {
 
 export const notInDca = ({siblings}) => siblings.find(({method}) => ['ExecutionStarted'].includes(method)) === undefined;
 
-const window = 50;
+export const window = 50;
 let buffer = [];
 
 function flushStale(blockNumber) {

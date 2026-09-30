@@ -17,6 +17,7 @@ import circuitbreaker from "./handlers/circuitbreaker.js";
 import deployments from "./handlers/deployments.js";
 import bil from "./handlers/bil.js";
 import gamma from "./handlers/gamma.js";
+import ice, {terminator as iceTerminator} from "./handlers/ice.js";
 import {initDiscord} from "./discord.js";
 import "./health.js";
 import {rpc, sha, token, channel} from "./config.js";
@@ -65,6 +66,7 @@ async function main() {
   events.addHandler(deployments);
   events.addHandler(bil);
   events.addHandler(gamma);
+  events.addHandler(ice);
 
   if (process.env.NODE_ENV === 'test') {
     console.log('testing mode: pushing testing blocks');
@@ -101,6 +103,7 @@ main().catch(err => {
 
 function exit(code = 0) {
   terminator();
+  iceTerminator();
   submitReport();
   setTimeout(() => process.exit(code), 500);
 }

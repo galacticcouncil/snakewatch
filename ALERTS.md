@@ -137,6 +137,25 @@ token1 = HOLLAR `222`). Adding a vault is one entry.
 **Behavior:** Discord broadcast only (like the xyk / BIL feeds), not the Slack alert subsystem.
 Always registered — no toggle.
 
+### ICE Intent Fills
+
+**Purpose:** Report intents settled by ICE (`ice.submit_solution`) per intent owner, batched so that
+partially fillable limit orders that take a small fill every block don't spam the feed.
+
+**What it reports:**
+- Fills (`intent.IntentResovedPartially`, `intent.DcaTradeExecuted`, `intent.IntentResolved`) are
+  buffered per intent id and posted as one line, like DCA trades:
+  `<account> split over 36 swaps **0.7908 HOLLAR** for **0.7436 PRIME**`. A single fill is posted as
+  a plain `swapped` line.
+- A batch is posted when its fills span more than 50 blocks (the DCA window), when no fill has come
+  for 50 blocks, or right away when the intent resolves, is canceled, expires or completes.
+- DCA intents whose period is 50 blocks or more are posted on every trade, without batching.
+- Owner and asset pair come from `intent.intents` / `intent.intentOwner` at the parent block.
+- `router.Executed` inside an ICE solution is skipped. The router trades there are the solver's net
+  residual, not per-user swaps.
+
+**Behavior:** Discord broadcast only, always registered. Pending batches are flushed on shutdown.
+
 ## Complete Configuration Example
 
 ```bash

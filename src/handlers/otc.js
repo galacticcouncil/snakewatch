@@ -20,12 +20,15 @@ async function placedHandler({event, siblings}) {
 async function filledHandler({event, siblings}) {
   const {who} = event.data;
   const whoStr = who.toString();
+  // currencies.Transferred is emitted for every leg regardless of asset type
+  // (native, tokens, ERC20); tokens.Transfer / balances.Transfer are not, so an
+  // ERC20 leg (HOLLAR, HYPE, ...) would otherwise never be found.
   const [b, a] = siblings
     .slice(0, siblings.indexOf(event))
     .reverse()
-    .filter(({method, data}) => method === 'Transfer'
+    .filter(({section, method, data}) => section === 'currencies' && method === 'Transferred'
       && (data.from?.toString() === whoStr || data.to?.toString() === whoStr))
-    .map(({data}) => ({currencyId: 0, ...data}));
+    .map(({data}) => data);
   if (!a || !b) {
     console.warn('otc filled: could not find both swap legs for', whoStr);
     return;

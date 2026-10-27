@@ -283,6 +283,37 @@ echo $ALERT_PRICE_DELTA | jq .
 3. Check logs for configuration errors
 4. Ensure webhook URL is accessible
 
+## NTT backing monitor
+
+Continuously checks that every NTT asset's Hydration issuance stays fully backed
+by underlying custodied on the origin (locking) hub. On each cycle it compares
+`Tokens.TotalIssuance(assetId)` against the hub custody balance
+(`token.balanceOf(manager)` on Ethereum/Base, the custody token account on
+Solana, the `State` object's balance on Sui — all normalized to 8 dp) and
+alerts when custody falls below issuance.
+
+- **`🚨 NTT BACKING INSUFFICIENT`** — custody `<` issuance for an asset; message
+  reports the shortfall, the % backed, and the origin chain. Re-alerts every
+  `BACKING_REALERT_HOURS` while unhealthy.
+- **`✅ NTT BACKING RESTORED`** — custody has recovered to `>=` issuance.
+
+Metrics under the `backing` namespace: `backing_custody`, `backing_issuance`,
+`backing_ratio`, `backing_sufficient`, `backing_shortfall`,
+`backing_check_errors_total`. Live snapshot at `GET /backing`.
+
+Config (all optional):
+
+| Env | Default | Purpose |
+|---|---|---|
+| `ETH_RPC` | publicnode | Ethereum RPC for hub custody reads |
+| `BASE_RPC` | publicnode | Base RPC (EURC) |
+| `SOLANA_RPC` | mainnet-beta | Solana RPC (SOL/jitoSOL/PRIME custody) |
+| `SUI_RPC` | publicnode | Sui RPC (SUI State object) |
+| `BACKING_INTERVAL` | `300` | poll cadence (seconds) |
+| `BACKING_THRESHOLD` | `1` | custody/issuance ratio below which it alerts (`>1` = require a buffer) |
+| `BACKING_REALERT_HOURS` | `6` | re-alert cadence while under-backed |
+| `BACKING_DISABLED` | — | set truthy to skip the monitor |
+
 ## Integration Examples
 
 ### Docker Compose

@@ -17,6 +17,7 @@ import circuitbreaker from "./handlers/circuitbreaker.js";
 import deployments from "./handlers/deployments.js";
 import bil from "./handlers/bil.js";
 import ntt from "./handlers/ntt.js";
+import backing from "./handlers/backing.js";
 import {initDiscord} from "./discord.js";
 import "./health.js";
 import {rpc, sha, token, channel} from "./config.js";
@@ -65,6 +66,9 @@ async function main() {
   events.addHandler(deployments);
   events.addHandler(bil);
   events.addHandler(ntt);
+
+  // periodic (not block-driven): poll origin-chain hub custody vs Hydration issuance
+  backing();
 
   if (process.env.NODE_ENV === 'test') {
     console.log('testing mode: pushing testing blocks');

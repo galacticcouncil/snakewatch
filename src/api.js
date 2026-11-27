@@ -1,6 +1,14 @@
 import {ApiPromise, WsProvider} from "@polkadot/api";
-import {PoolService, TradeRouter} from "@galacticcouncil/sdk";
+import {AssetClient, PoolService, TradeRouter} from "@galacticcouncil/sdk";
 import { EvmClient } from "@galacticcouncil/sdk";
+
+// share assets can outlive their pool (105 since hydradx/458); sdk assumes they can't
+const getShares = AssetClient.prototype.getShares;
+AssetClient.prototype.getShares = function (id, asset, metadata, pool) {
+  return pool
+    ? getShares.call(this, id, asset, metadata, pool)
+    : this.getToken(id, asset, metadata);
+};
 
 let initialized = false;
 let _api;
